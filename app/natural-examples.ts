@@ -97,6 +97,156 @@ const featured: Record<string, ExampleSentence> = {
     after: ' the lives of both workers and residents.',
     translation: '削减安全预算可能危及工人和居民的生命。',
   },
+  feel: {
+    before: 'Many university students ',
+    after: ' anxious when they have to balance study with part-time work.',
+    translation: '许多大学生在兼顾学业和兼职工作时会感到焦虑。',
+  },
+  mood: {
+    before: 'Regular exercise can improve a person’s ',
+    after: ' and help them manage everyday stress.',
+    translation: '规律运动可以改善一个人的情绪，并帮助其应对日常压力。',
+  },
+  emotion: {
+    before: 'Children need a safe environment in which to express ',
+    after: ' without fear of being judged.',
+    translation: '儿童需要一个安全的环境来表达情绪，而不必担心受到评判。',
+  },
+  attitude: {
+    before: 'A positive ',
+    after: ' towards learning can make it easier to overcome early setbacks.',
+    translation: '对学习持积极态度能让人更容易克服早期挫折。',
+  },
+  character: {
+    before: 'Volunteering can help young people develop ',
+    after: ' as well as practical skills.',
+    translation: '志愿服务既能帮助年轻人培养品格，也能培养实用技能。',
+  },
+  personality: {
+    before: 'Although ',
+    after: ' may influence career choices, experience often matters more in the workplace.',
+    translation: '尽管个性可能影响职业选择，但在职场中经验往往更重要。',
+  },
+  cripple: {
+    before: 'A serious injury can ',
+    after: ' a person’s ability to work and live independently.',
+    translation: '严重的伤病可能会使一个人失去工作和独立生活的能力。',
+  },
+  lame: {
+    before: 'The audience found his explanation ',
+    after: ' because it failed to address the main issue.',
+    translation: '观众认为他的解释很牵强，因为它没有回应核心问题。',
+  },
+  dwarf: {
+    before: 'The new library is ',
+    after: 'ed by the high-rise buildings around it.',
+    translation: '新图书馆在周围高楼的映衬下显得很矮小。',
+  },
+  pregnancy: {
+    before: 'Good nutrition during ',
+    after: ' is essential for the health of both mother and child.',
+    translation: '孕期良好的营养对母亲和孩子的健康都至关重要。',
+  },
+  pregnant: {
+    before: 'Pregnant women should have access to regular medical care throughout ',
+    after: '.',
+    translation: '孕妇在整个孕期都应获得定期的医疗照护。',
+  },
+  born: {
+    before: 'Children ',
+    after: ' into disadvantaged families may need additional support at school.',
+    translation: '出生在弱势家庭的儿童在学校中可能需要额外支持。',
+  },
+  condom: {
+    before: 'The health campaign provided clear information about how to use a ',
+    after: ' correctly.',
+    translation: '这项健康宣传活动清晰讲解了如何正确使用安全套。',
+  },
+  symptom: {
+    before: 'Persistent fatigue can be an early ',
+    after: ' of several common health conditions.',
+    translation: '持续疲劳可能是多种常见健康问题的早期症状。',
+  },
+  disease: {
+    before: 'Vaccination remains one of the most effective ways to prevent infectious ',
+    after: '.',
+    translation: '接种疫苗仍然是预防传染病最有效的方法之一。',
+  },
+  illness: {
+    before: 'Long-term ',
+    after: ' can affect not only patients but also their families.',
+    translation: '长期疾病不仅会影响患者，也会影响其家人。',
+  },
+  moan: {
+    before: 'The patient began to ',
+    after: ' when the nurse moved his injured arm.',
+    translation: '护士移动病人受伤的手臂时，他开始呻吟。',
+  },
+  infection: {
+    before: 'Prompt treatment can stop a minor ',
+    after: ' from becoming more serious.',
+    translation: '及时治疗可以避免轻微感染变得更严重。',
+  },
+  infect: {
+    before: 'Contaminated water can ',
+    after: ' people who do not have access to clean drinking supplies.',
+    translation: '受污染的水可能感染无法获得洁净饮用水的人。',
+  },
+  detriment: {
+    before: 'Excessive screen time may be to the ',
+    after: ' of children’s sleep and concentration.',
+    translation: '过多的屏幕时间可能损害儿童的睡眠和注意力。',
+  },
+  broken: {
+    before: 'The device was returned because its screen was ',
+    after: ' when it arrived.',
+    translation: '该设备送达时屏幕已经损坏，因此被退回。',
+  },
+  disable: {
+    before: 'A workplace accident can ',
+    after: ' an employee for months if rehabilitation is delayed.',
+    translation: '如果康复治疗被延误，工作事故可能会使员工数月失去工作能力。',
+  },
+  invalid: {
+    before: 'The application was rejected because the supporting document was ',
+    after: '.',
+    translation: '由于证明文件无效，该申请被拒绝了。',
+  },
+  patient: {
+    before: 'The nurse explained the treatment plan to each ',
+    after: ' in clear and simple language.',
+    translation: '护士用清晰易懂的语言向每位病人解释治疗方案。',
+  },
+  dysfunction: {
+    before: 'Chronic stress may contribute to sleep ',
+    after: ' and reduced concentration.',
+    translation: '长期压力可能导致睡眠功能紊乱和注意力下降。',
+  },
+  diabetes: {
+    before: 'A balanced diet and regular exercise can reduce the risk of type 2 ',
+    after: '.',
+    translation: '均衡饮食和规律运动可以降低患 2 型糖尿病的风险。',
+  },
+  obesity: {
+    before: 'Schools can help prevent childhood ',
+    after: ' by providing healthier meals and more opportunities for exercise.',
+    translation: '学校可以通过提供更健康的餐食和更多运动机会来预防儿童肥胖。',
+  },
+  hypertension: {
+    before: 'Reducing salt intake can help many adults control ',
+    after: '.',
+    translation: '减少盐摄入可以帮助许多成年人控制高血压。',
+  },
+  paralyse: {
+    before: 'Fear of failure can ',
+    after: ' people and prevent them from taking useful action.',
+    translation: '对失败的恐惧会使人无法行动，并阻止他们采取有益行动。',
+  },
+  dizzy: {
+    before: 'Some people feel ',
+    after: ' when they stand up too quickly after sitting for a long time.',
+    translation: '有些人久坐后突然站起时会感到头晕。',
+  },
 };
 
 const relatedWords: Record<string, RelatedWord[]> = {
