@@ -368,7 +368,205 @@ const relatedWords: Record<string, RelatedWord[]> = {
     { word: 'in jeopardy', note: '处于危险之中' },
     { word: 'put ... in jeopardy', note: '使……陷入危险' },
   ],
+  feel: [
+    { word: 'felt', note: '过去式和过去分词' },
+    { word: 'feeling', note: '名词：感觉；情感' },
+    { word: 'feel like doing', note: '想要做某事' },
+  ],
+  mood: [
+    { word: 'moody', note: '形容词：情绪多变的' },
+    { word: 'be in a good mood', note: '心情很好' },
+  ],
+  emotion: [
+    { word: 'emotional', note: '形容词：情绪激动的；情感的' },
+    { word: 'emotional support', note: '情感支持' },
+  ],
+  temper: [
+    { word: 'temperamental', note: '形容词：喜怒无常的' },
+    { word: 'lose one’s temper', note: '发脾气' },
+  ],
+  manner: [
+    { word: 'in a ... manner', note: '以……方式' },
+    { word: 'good manners', note: '良好的礼貌' },
+  ],
+  attitude: [
+    { word: 'attitudinal', note: '形容词：态度方面的' },
+    { word: 'a positive attitude', note: '积极的态度' },
+  ],
+  character: [
+    { word: 'characteristic', note: '形容词：典型的；名词：特征' },
+    { word: 'build character', note: '培养品格' },
+  ],
+  personality: [
+    { word: 'personal', note: '形容词：个人的' },
+    { word: 'personality trait', note: '性格特质' },
+  ],
+  trait: [
+    { word: 'personality trait', note: '性格特质' },
+    { word: 'a defining trait', note: '鲜明特征' },
+  ],
+  virtue: [
+    { word: 'virtuous', note: '形容词：有美德的' },
+    { word: 'moral virtue', note: '道德美德' },
+  ],
+  feature: [
+    { word: 'featured', note: '形容词：作为特色的；重点介绍的' },
+    { word: 'a key feature', note: '一项主要特色' },
+  ],
+  stature: [
+    { word: 'of international stature', note: '具有国际声望的' },
+    { word: 'grow in stature', note: '声望提高' },
+  ],
+  flesh: [
+    { word: 'flesh out', note: '充实；使具体化' },
+    { word: 'in the flesh', note: '亲自；本人在场' },
+  ],
+  mankind: [
+    { word: 'humankind', note: '名词：人类' },
+    { word: 'for the good of mankind', note: '为了全人类的福祉' },
+  ],
+  pregnancy: [
+    { word: 'pregnant', note: '形容词：怀孕的' },
+    { word: 'during pregnancy', note: '在孕期' },
+  ],
+  pregnant: [
+    { word: 'pregnancy', note: '名词：怀孕；妊娠' },
+    { word: 'get pregnant', note: '怀孕' },
+  ],
+  infect: [
+    { word: 'infected', note: '过去式和过去分词；形容词：受感染的' },
+    { word: 'infection', note: '名词：感染' },
+  ],
+  infection: [
+    { word: 'infect', note: '动词：感染' },
+    { word: 'infectious', note: '形容词：传染性的' },
+  ],
+  obesity: [
+    { word: 'obese', note: '形容词：肥胖的' },
+    { word: 'childhood obesity', note: '儿童肥胖' },
+  ],
+  paralyse: [
+    { word: 'paralysed', note: '过去式和过去分词；形容词：瘫痪的' },
+    { word: 'paralysis', note: '名词：瘫痪' },
+  ],
+  fluent: [
+    { word: 'fluency', note: '名词：流利；流畅' },
+    { word: 'be fluent in', note: '熟练掌握（某种语言）' },
+  ],
 };
+
+const irregularVerbs: Record<string, RelatedWord[]> = {
+  be: [{ word: 'was / were', note: '过去式' }, { word: 'been', note: '过去分词' }],
+  bear: [{ word: 'bore', note: '过去式' }, { word: 'borne', note: '过去分词' }],
+  become: [{ word: 'became', note: '过去式' }, { word: 'become', note: '过去分词' }],
+  begin: [{ word: 'began', note: '过去式' }, { word: 'begun', note: '过去分词' }],
+  bend: [{ word: 'bent', note: '过去式和过去分词' }],
+  bet: [{ word: 'bet', note: '过去式和过去分词' }],
+  bind: [{ word: 'bound', note: '过去式和过去分词' }],
+  bite: [{ word: 'bit', note: '过去式' }, { word: 'bitten', note: '过去分词' }],
+  bleed: [{ word: 'bled', note: '过去式和过去分词' }],
+  blow: [{ word: 'blew', note: '过去式' }, { word: 'blown', note: '过去分词' }],
+  break: [{ word: 'broke', note: '过去式' }, { word: 'broken', note: '过去分词' }],
+  breed: [{ word: 'bred', note: '过去式和过去分词' }],
+  bring: [{ word: 'brought', note: '过去式和过去分词' }],
+  build: [{ word: 'built', note: '过去式和过去分词' }],
+  buy: [{ word: 'bought', note: '过去式和过去分词' }],
+  catch: [{ word: 'caught', note: '过去式和过去分词' }],
+  choose: [{ word: 'chose', note: '过去式' }, { word: 'chosen', note: '过去分词' }],
+  come: [{ word: 'came', note: '过去式' }, { word: 'come', note: '过去分词' }],
+  cost: [{ word: 'cost', note: '过去式和过去分词' }],
+  creep: [{ word: 'crept', note: '过去式和过去分词' }],
+  cut: [{ word: 'cut', note: '过去式和过去分词' }],
+  deal: [{ word: 'dealt', note: '过去式和过去分词' }],
+  dig: [{ word: 'dug', note: '过去式和过去分词' }],
+  do: [{ word: 'did', note: '过去式' }, { word: 'done', note: '过去分词' }],
+  draw: [{ word: 'drew', note: '过去式' }, { word: 'drawn', note: '过去分词' }],
+  drink: [{ word: 'drank', note: '过去式' }, { word: 'drunk', note: '过去分词' }],
+  drive: [{ word: 'drove', note: '过去式' }, { word: 'driven', note: '过去分词' }],
+  eat: [{ word: 'ate', note: '过去式' }, { word: 'eaten', note: '过去分词' }],
+  fall: [{ word: 'fell', note: '过去式' }, { word: 'fallen', note: '过去分词' }],
+  feed: [{ word: 'fed', note: '过去式和过去分词' }],
+  fight: [{ word: 'fought', note: '过去式和过去分词' }],
+  find: [{ word: 'found', note: '过去式和过去分词' }],
+  fly: [{ word: 'flew', note: '过去式' }, { word: 'flown', note: '过去分词' }],
+  forbid: [{ word: 'forbade', note: '过去式' }, { word: 'forbidden', note: '过去分词' }],
+  forget: [{ word: 'forgot', note: '过去式' }, { word: 'forgotten', note: '过去分词' }],
+  forgive: [{ word: 'forgave', note: '过去式' }, { word: 'forgiven', note: '过去分词' }],
+  freeze: [{ word: 'froze', note: '过去式' }, { word: 'frozen', note: '过去分词' }],
+  get: [{ word: 'got', note: '过去式' }, { word: 'got / gotten', note: '过去分词' }],
+  give: [{ word: 'gave', note: '过去式' }, { word: 'given', note: '过去分词' }],
+  go: [{ word: 'went', note: '过去式' }, { word: 'gone', note: '过去分词' }],
+  grow: [{ word: 'grew', note: '过去式' }, { word: 'grown', note: '过去分词' }],
+  hang: [{ word: 'hung', note: '过去式和过去分词' }],
+  have: [{ word: 'had', note: '过去式和过去分词' }],
+  hear: [{ word: 'heard', note: '过去式和过去分词' }],
+  hide: [{ word: 'hid', note: '过去式' }, { word: 'hidden', note: '过去分词' }],
+  hold: [{ word: 'held', note: '过去式和过去分词' }],
+  keep: [{ word: 'kept', note: '过去式和过去分词' }],
+  know: [{ word: 'knew', note: '过去式' }, { word: 'known', note: '过去分词' }],
+  lay: [{ word: 'laid', note: '过去式和过去分词' }],
+  lead: [{ word: 'led', note: '过去式和过去分词' }],
+  leave: [{ word: 'left', note: '过去式和过去分词' }],
+  lend: [{ word: 'lent', note: '过去式和过去分词' }],
+  lie: [{ word: 'lay', note: '过去式' }, { word: 'lain', note: '过去分词' }],
+  lose: [{ word: 'lost', note: '过去式和过去分词' }],
+  make: [{ word: 'made', note: '过去式和过去分词' }],
+  mean: [{ word: 'meant', note: '过去式和过去分词' }],
+  meet: [{ word: 'met', note: '过去式和过去分词' }],
+  pay: [{ word: 'paid', note: '过去式和过去分词' }],
+  prove: [{ word: 'proved', note: '过去式' }, { word: 'proven / proved', note: '过去分词' }],
+  put: [{ word: 'put', note: '过去式和过去分词' }],
+  read: [{ word: 'read', note: '过去式和过去分词，读音为 /red/' }],
+  ride: [{ word: 'rode', note: '过去式' }, { word: 'ridden', note: '过去分词' }],
+  ring: [{ word: 'rang', note: '过去式' }, { word: 'rung', note: '过去分词' }],
+  rise: [{ word: 'rose', note: '过去式' }, { word: 'risen', note: '过去分词' }],
+  run: [{ word: 'ran', note: '过去式' }, { word: 'run', note: '过去分词' }],
+  say: [{ word: 'said', note: '过去式和过去分词' }],
+  see: [{ word: 'saw', note: '过去式' }, { word: 'seen', note: '过去分词' }],
+  sell: [{ word: 'sold', note: '过去式和过去分词' }],
+  send: [{ word: 'sent', note: '过去式和过去分词' }],
+  set: [{ word: 'set', note: '过去式和过去分词' }],
+  shake: [{ word: 'shook', note: '过去式' }, { word: 'shaken', note: '过去分词' }],
+  shoot: [{ word: 'shot', note: '过去式和过去分词' }],
+  show: [{ word: 'showed', note: '过去式' }, { word: 'shown', note: '过去分词' }],
+  shut: [{ word: 'shut', note: '过去式和过去分词' }],
+  sing: [{ word: 'sang', note: '过去式' }, { word: 'sung', note: '过去分词' }],
+  sit: [{ word: 'sat', note: '过去式和过去分词' }],
+  sleep: [{ word: 'slept', note: '过去式和过去分词' }],
+  speak: [{ word: 'spoke', note: '过去式' }, { word: 'spoken', note: '过去分词' }],
+  spend: [{ word: 'spent', note: '过去式和过去分词' }],
+  stand: [{ word: 'stood', note: '过去式和过去分词' }],
+  steal: [{ word: 'stole', note: '过去式' }, { word: 'stolen', note: '过去分词' }],
+  swim: [{ word: 'swam', note: '过去式' }, { word: 'swum', note: '过去分词' }],
+  take: [{ word: 'took', note: '过去式' }, { word: 'taken', note: '过去分词' }],
+  teach: [{ word: 'taught', note: '过去式和过去分词' }],
+  tear: [{ word: 'tore', note: '过去式' }, { word: 'torn', note: '过去分词' }],
+  tell: [{ word: 'told', note: '过去式和过去分词' }],
+  think: [{ word: 'thought', note: '过去式和过去分词' }],
+  throw: [{ word: 'threw', note: '过去式' }, { word: 'thrown', note: '过去分词' }],
+  understand: [{ word: 'understood', note: '过去式和过去分词' }],
+  wake: [{ word: 'woke', note: '过去式' }, { word: 'woken', note: '过去分词' }],
+  wear: [{ word: 'wore', note: '过去式' }, { word: 'worn', note: '过去分词' }],
+  win: [{ word: 'won', note: '过去式和过去分词' }],
+  write: [{ word: 'wrote', note: '过去式' }, { word: 'written', note: '过去分词' }],
+  born: [{ word: 'bear — bore — borne', note: '对应动词的不规则变化' }],
+  broken: [{ word: 'break — broke — broken', note: '对应动词的不规则变化' }],
+};
+
+function sourceHintRelations(word: string, sourceHint?: string): RelatedWord[] {
+  if (!sourceHint) return [];
+  const candidates = sourceHint.match(/[A-Za-z][A-Za-z'’~\-]*(?:\s+[A-Za-z][A-Za-z'’~\-]*)*/g) ?? [];
+  const ignored = new Set(['n', 'v', 'adj', 'adv', 'a', 'sb', 'sth', 'of', 'to', 'and', 'or', 'the']);
+  const seen = new Set<string>();
+  return candidates.flatMap((candidate) => {
+    let phrase = candidate.replace(/[’]/g, "'").replace(/\s+(?:n|v|adj|adv)$/i, '').trim();
+    if (ignored.has(phrase.toLowerCase()) || phrase.length < 3) return [];
+    if (phrase.includes('~')) phrase = phrase.replace(/~/g, ' ' + word + ' ').replace(/\s+/g, ' ').trim();
+    if (phrase.toLowerCase() === word.toLowerCase() || seen.has(phrase.toLowerCase())) return [];
+    seen.add(phrase.toLowerCase());
+    return [{ word: phrase, note: phrase.includes(' ') ? '词书常用搭配' : '词书相关词' }];
+  });
+}
 
 const topics: Record<number, { en: string; zh: string }> = {
   1: { en: 'the natural environment', zh: '自然环境' },
@@ -462,6 +660,18 @@ export function createNaturalExample(word: Word): ExampleSentence {
   ][variant];
 }
 
-export function getRelatedWords(word: string) {
-  return relatedWords[word.toLowerCase()] ?? [];
+export function getRelatedWords(word: string, sourceHint?: string) {
+  const key = word.toLowerCase();
+  const all = [
+    ...(relatedWords[key] ?? []),
+    ...(irregularVerbs[key] ?? []),
+    ...sourceHintRelations(word, sourceHint),
+  ];
+  const seen = new Set<string>();
+  return all.filter((item) => {
+    const identity = item.word.toLowerCase();
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  }).slice(0, 6);
 }

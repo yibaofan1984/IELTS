@@ -7,6 +7,7 @@ export type BookWord = {
   number: number;
   word: string;
   hint: string;
+  sourceHint?: string;
   sourceId?: string;
 };
 
@@ -39,6 +40,7 @@ function chineseHint(hint: string) {
 const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => ({
   ...word,
   word: corrections[word.word] ?? word.word,
+  sourceHint: word.hint,
   hint: chineseHint(word.hint),
   sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
 })));
@@ -46,7 +48,7 @@ const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.
 function insertBefore(target: string, word: Omit<BookWord, 'sourceId'>) {
   const index = stream.findIndex((item) => item.word === target);
   if (index < 0) throw new Error('Missing insertion point: ' + target);
-  stream.splice(index, 0, { ...word, sourceId: 'book-' + word.word });
+  stream.splice(index, 0, { ...word, sourceHint: word.sourceHint ?? word.hint, sourceId: 'book-' + word.word });
 }
 
 // These two headwords are printed in the book but were absent from the old imported list.
