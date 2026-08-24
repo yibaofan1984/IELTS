@@ -54,6 +54,10 @@ export default function Home() {
     if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify(mistakeIds));
   }, [mistakeIds, ready]);
 
+  useEffect(() => {
+    if (current && !result) inputRef.current?.focus();
+  }, [current, result]);
+
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
     setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null);
     setCorrectCount(0); setWrongCount(0);
@@ -151,7 +155,7 @@ export default function Home() {
               <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name} · 原书 List {current.list}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
-                <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className={`w-full bg-transparent text-center text-2xl font-black tracking-[0.12em] outline-none sm:text-3xl ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : 'text-[#172033]'}`} placeholder="输入英文拼写" />
+                <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className={`w-full bg-transparent text-center text-2xl font-black tracking-[0.12em] outline-none sm:text-3xl ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : 'text-[#172033]'}`} placeholder="输入英文拼写" />
                 <div className="mx-auto mt-5 flex flex-wrap justify-center gap-x-2 gap-y-3" aria-label={`${letterCount} 个字母`}>{Array.from({ length: letterCount }).map((_, lineIndex) => <span key={lineIndex} className={`h-[3px] w-8 rounded-full ${lineIndex === 0 && !result ? 'bg-[#7eb0ff]' : result === 'correct' ? 'bg-[#64cd9b]' : result === 'wrong' ? 'bg-[#f08b99]' : 'bg-[#ccd5e3]'}`} />)}</div>
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
