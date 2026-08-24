@@ -24,9 +24,22 @@ const corrections: Record<string, string> = {
   temperat: 'temperate',
 };
 
+function chineseHint(hint: string) {
+  return hint
+    .replace(/\[[^\]]*]/g, '')
+    .replace(/[A-Za-z][A-Za-z0-9 .,'’~\-]*/g, '')
+    .replace(/[~|]/g, '')
+    .replace(/\s+/g, '')
+    .replace(/[，,、；;]+/g, '；')
+    .replace(/[。．]+/g, '。')
+    .replace(/^[；。]+|[；。]+$/g, '')
+    || '请参阅词书释义';
+}
+
 const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => ({
   ...word,
   word: corrections[word.word] ?? word.word,
+  hint: chineseHint(word.hint),
   sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
 })));
 
