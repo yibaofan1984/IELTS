@@ -1,5 +1,6 @@
 import bookContentData from './book-content.json';
 import wordnetRelationsData from './wordnet-relations.json';
+import { chineseMeaningByWord } from './book-chapters';
 
 export type ExampleSentence = {
   before: string;
@@ -797,19 +798,50 @@ const irregularVerbs: Record<string, RelatedWord[]> = {
   broken: [{ word: 'break — broke — broken', note: '对应动词的不规则变化' }],
 };
 
+function grammarFormNote(source: string) {
+  const marker = source.match(/^\s*(n|v|adj|adv)\s*\./i)?.[1]?.toLowerCase();
+  if (marker === 'n') return '名词形式';
+  if (marker === 'v') return '动词形式';
+  if (marker === 'adj') return '形容词形式';
+  if (marker === 'adv') return '副词形式';
+  return '';
+}
+
+function sourceHintExplanation(sourceHint: string, matchEnd: number, phrase: string) {
+  const remainder = sourceHint.slice(matchEnd);
+  const chinese = remainder
+    .replace(/^\s*(?:n|v|adj|adv)\s*\.?\s*/i, '')
+    .match(/^[：:，,；;。．.\s]*([\u3400-\u9fff][\u3400-\u9fff、，；（）()·…\s]*)/)?.[1]
+    ?.trim()
+    .replace(/[，；。]+$/, '');
+  if (chinese) return chinese;
+  return chineseMeaningByWord[phrase.toLowerCase()] ?? grammarFormNote(remainder);
+}
+
 function sourceHintRelations(word: string, sourceHint?: string): RelatedWord[] {
   if (!sourceHint) return [];
-  const candidates = sourceHint.match(/[A-Za-z][A-Za-z'’~\-]*(?:\s+[A-Za-z][A-Za-z'’~\-]*)*/g) ?? [];
+  const candidatePattern = /[A-Za-z][A-Za-z'’~\-]*(?:\s+[A-Za-z][A-Za-z'’~\-]*)*/g;
   const ignored = new Set(['n', 'v', 'adj', 'adv', 'a', 'sb', 'sth', 'of', 'to', 'and', 'or', 'the']);
   const seen = new Set<string>();
-  return candidates.flatMap((candidate) => {
+  return Array.from(sourceHint.matchAll(candidatePattern)).flatMap((match) => {
+    const candidate = match[0];
     let phrase = candidate.replace(/[’]/g, "'").replace(/\s+(?:n|v|adj|adv)$/i, '').trim();
     if (ignored.has(phrase.toLowerCase()) || phrase.length < 3) return [];
     if (phrase.includes('~')) phrase = phrase.replace(/~/g, ' ' + word + ' ').replace(/\s+/g, ' ').trim();
     if (phrase.toLowerCase() === word.toLowerCase() || seen.has(phrase.toLowerCase())) return [];
+    const note = sourceHintExplanation(sourceHint, (match.index ?? 0) + candidate.length, phrase);
+    if (!note) return [];
     seen.add(phrase.toLowerCase());
-    return [{ word: phrase, note: phrase.includes(' ') ? '词书常用搭配' : '词书相关词' }];
+    return [{ word: phrase, note }];
   });
+}
+
+function localiseRelationNote(note: string) {
+  return note
+    .replace(/^adj\.\s*/i, '形容词形式：')
+    .replace(/^adv\.\s*/i, '副词形式：')
+    .replace(/^n\.\s*/i, '名词形式：')
+    .replace(/^v\.\s*/i, '动词形式：');
 }
 
 const topics: Record<number, { en: string; zh: string }> = {
@@ -859,14 +891,17 @@ export function createNaturalExample(word: Word): ExampleSentence | null {
   return bookContent[word.word.toLowerCase()] ?? null;
 }
 
-export function getRelatedWords(word: string, sourceHint?: string) {
+export function getRelatedWords(word: string, sourceHint?: string, chineseMeaning?: string) {
   const key = word.toLowerCase();
   const all = [
     ...(relatedWords[key] ?? []),
     ...(irregularVerbs[key] ?? []),
-    ...(wordnetRelations[key] ?? []).map((related) => ({ word: related, note: '常用关联词' })),
+    ...(wordnetRelations[key] ?? []).flatMap((related) => {
+      const note = chineseMeaningByWord[related.toLowerCase()];
+      return note ? [{ word: related, note }] : [];
+    }),
     ...sourceHintRelations(word, sourceHint),
-  ];
+  ].map((item) => ({ ...item, note: localiseRelationNote(item.note) }));
   const seen = new Set<string>();
   const filtered = all.filter((item) => {
     const identity = item.word.toLowerCase();
@@ -881,5 +916,5 @@ export function getRelatedWords(word: string, sourceHint?: string) {
   const leftWords = example.before.match(/[A-Za-z']+/g) ?? [];
   const rightWords = example.after.match(/[A-Za-z']+/g) ?? [];
   const phrase = [...leftWords.slice(-2), word, ...rightWords.slice(0, 1)].join(' ');
-  return [{ word: phrase, note: '例句中的常用搭配' }];
+  return [{ word: phrase, note: chineseMeaning ?? chineseMeaningByWord[key] ?? '常用短语' }];
 }

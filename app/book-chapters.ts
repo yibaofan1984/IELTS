@@ -94,6 +94,12 @@ export const chapters: BookChapter[] = chapterNames.map((name, index) => {
   };
 });
 
+// Reuse the book's cleaned Chinese definitions when explaining related words.
+// A later occurrence wins when a headword appears more than once in the book.
+export const chineseMeaningByWord: Record<string, string> = Object.fromEntries(
+  chapters.flatMap((chapter) => chapter.words).map((word) => [word.word.toLowerCase(), word.hint]),
+);
+
 const temporaryChapter21Migration = new Map<string, string>([
   ['21-57-1-feel', '20-55-28-feel'],
   ['21-57-2-mood', '20-55-29-mood'],

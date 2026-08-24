@@ -89,7 +89,7 @@ export default function Home() {
   const typedCharacters = Array.from(answer.toLowerCase());
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
   const exampleSentence = current ? createNaturalExample(current) : null;
-  const relatedWords = current ? getRelatedWords(current.word, current.sourceHint) : [];
+  const relatedWords = current ? getRelatedWords(current.word, current.sourceHint, current.hint) : [];
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
   const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
