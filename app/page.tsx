@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import chaptersData from './vocabulary.json';
+import { createNaturalExample } from './natural-examples';
 
 type Word = { chapter: number; chapterName: string; list: number; number: number; word: string; hint: string };
 type Chapter = { id: number; name: string; words: Word[] };
@@ -83,7 +84,7 @@ export default function Home() {
   const expectedCharacters = Array.from(current?.word.toLowerCase() ?? '');
   const typedCharacters = Array.from(answer.toLowerCase());
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
-  const exampleSentence = current ? createExampleSentence(current) : null;
+  const exampleSentence = current ? createNaturalExample(current) : null;
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
 
