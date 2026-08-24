@@ -11,7 +11,35 @@ type MistakeCounts = Record<string, number>;
 type WordOrder = 'sequential' | 'random';
 type PromptMode = 'chinese' | 'audio';
 
-const chapters = chaptersData as Chapter[];
+// The first printed block in Chapter 21 precedes "cripple" in the book.
+const chapter21OpeningWords: Word[] = [
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 1, word: 'feel', hint: '感觉到，感知；触碰' },
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 2, word: 'mood', hint: '心情，情绪；气氛' },
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 3, word: 'emotion', hint: '情绪，情感，感情' },
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 4, word: 'attitude', hint: '看法，态度' },
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 5, word: 'character', hint: '性格；特征；人物，角色' },
+  { chapter: 21, chapterName: '身心健康', list: 57, number: 6, word: 'personality', hint: '个性，人格' },
+];
+const sourceChapters = chaptersData as Chapter[];
+const chapter21WordIdMigrations = new Map(
+  (sourceChapters.find((chapter) => chapter.id === 21)?.words ?? [])
+    .filter((word) => word.list === 57)
+    .map((word) => [
+      '21-57-' + word.number + '-' + word.word,
+      '21-57-' + (word.number + chapter21OpeningWords.length) + '-' + word.word,
+    ]),
+);
+const chapters = sourceChapters.map((chapter) => chapter.id === 21
+  ? {
+      ...chapter,
+      words: [
+        ...chapter21OpeningWords,
+        ...chapter.words.map((word) => word.list === 57
+          ? { ...word, number: word.number + chapter21OpeningWords.length }
+          : word),
+      ],
+    }
+  : chapter);
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
 const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
 const wordId = (word: Word) => `${word.chapter}-${word.list}-${word.number}-${word.word}`;
@@ -99,7 +127,9 @@ export default function Home() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
       if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-        setMistakeCounts(Object.fromEntries(Object.entries(saved).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)));
+        setMistakeCounts(Object.fromEntries(Object.entries(saved)
+          .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
+          .map(([id, count]) => [chapter21WordIdMigrations.get(id) ?? id, count])));
       } else {
         const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) ?? '[]');
         if (Array.isArray(legacy)) setMistakeCounts(Object.fromEntries(legacy.filter((item): item is string => typeof item === 'string').map((id) => [id, 1])));
