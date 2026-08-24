@@ -1,3 +1,6 @@
+import bookContentData from './book-content.json';
+import wordnetRelationsData from './wordnet-relations.json';
+
 export type ExampleSentence = {
   before: string;
   after: string;
@@ -172,6 +175,11 @@ const featured: Record<string, ExampleSentence> = {
     after: '.',
     translation: '气候变化是一项影响全人类的挑战。',
   },
+  bone: {
+    before: 'Once cancer has spread to the ',
+    after: ', it is difficult to treat.',
+    translation: '癌症一旦扩散到骨骼，就很难治疗。',
+  },
   cripple: {
     before: 'A serious injury can ',
     after: ' a person’s ability to work and live independently.',
@@ -292,7 +300,243 @@ const featured: Record<string, ExampleSentence> = {
     after: ' when they stand up too quickly after sitting for a long time.',
     translation: '有些人久坐后突然站起时会感到头晕。',
   },
+  'el nino': {
+    before: '',
+    after: ' can disrupt rainfall patterns across the Pacific region.',
+    translation: '厄尔尼诺现象会扰乱太平洋地区的降雨规律。',
+  },
+  tornado: {
+    before: 'The ',
+    after: ' destroyed several homes but caused no deaths.',
+    translation: '龙卷风摧毁了数所房屋，但没有造成人员死亡。',
+  },
+  silt: {
+    before: 'The river carried fertile ',
+    after: ' onto the surrounding farmland.',
+    translation: '河流把肥沃的淤泥带到了周围的农田。',
+  },
+  deforest: {
+    before: 'Companies should not ',
+    after: ' large areas simply to expand short-term production.',
+    translation: '企业不应为了扩大短期生产而砍伐大片森林。',
+  },
+  fertilise: {
+    before: 'Farmers use organic waste to ',
+    after: ' the soil and improve crop yields.',
+    translation: '农民利用有机废料给土壤施肥，以提高作物产量。',
+  },
+  horticulture: {
+    before: 'Urban ',
+    after: ' can provide fresh food and improve neglected public spaces.',
+    translation: '城市园艺能够提供新鲜食物，并改善被忽视的公共空间。',
+  },
+  amphibian: {
+    before: 'The decline of each ',
+    after: ' species may indicate wider damage to the wetland.',
+    translation: '每一种两栖动物数量的下降都可能表明湿地遭受了更广泛的破坏。',
+  },
+  horn: {
+    before: 'Illegal traders often target animals for their ',
+    after: ' rather than their meat.',
+    translation: '非法商贩捕杀这些动物，往往是为了获取兽角而不是肉。',
+  },
+  'tame nature': {
+    before: 'Early settlers believed they could ',
+    after: ', but floods repeatedly exposed the limits of that ambition.',
+    translation: '早期定居者以为能够征服自然，但一次次洪水暴露了这种企图的局限。',
+  },
+  sheepdog: {
+    before: 'A well-trained ',
+    after: ' can guide an entire flock with very little assistance.',
+    translation: '训练有素的牧羊犬几乎无需协助就能引导整个羊群。',
+  },
+  synthesise: {
+    before: 'Students must ',
+    after: ' evidence from several sources rather than summarise one article.',
+    translation: '学生必须综合多个来源的证据，而不是只概述一篇文章。',
+  },
+  displace: {
+    before: 'Rising sea levels could ',
+    after: ' millions of people living in coastal regions.',
+    translation: '海平面上升可能迫使数百万沿海居民迁离家园。',
+  },
+  questionnaire: {
+    before: 'The researchers tested the ',
+    after: ' with a small group before conducting the national survey.',
+    translation: '研究人员在开展全国调查前，先用一个小组测试了问卷。',
+  },
+  overestimate: {
+    before: 'People often ',
+    after: ' how much information they can remember after one reading.',
+    translation: '人们常常高估自己阅读一遍后能够记住的信息量。',
+  },
+  scholarship: {
+    before: 'The ',
+    after: ' allowed her to continue her studies without taking on additional debt.',
+    translation: '这笔奖学金使她能够继续学业，而不必承担更多债务。',
+  },
+  debate: {
+    before: 'Experts continue to ',
+    after: ' whether economic growth can be separated from environmental damage.',
+    translation: '专家们仍在讨论经济增长能否与环境破坏脱钩。',
+  },
+  concertmaster: {
+    before: 'The ',
+    after: ' led the orchestra in tuning before the conductor arrived.',
+    translation: '指挥到场前，首席小提琴手带领乐团调音。',
+  },
+  sponsorship: {
+    before: 'Corporate ',
+    after: ' enabled the museum to offer free admission to students.',
+    translation: '企业赞助使博物馆能够向学生免费开放。',
+  },
+  adorn: {
+    before: 'Local artists were invited to ',
+    after: ' the station walls with colourful murals.',
+    translation: '当地艺术家受邀用彩色壁画装饰车站墙面。',
+  },
+  thready: {
+    before: 'The patient had a weak, ',
+    after: ' pulse and required immediate medical attention.',
+    translation: '病人的脉搏微弱而细速，需要立即接受治疗。',
+  },
+  stringy: {
+    before: 'The vegetables became ',
+    after: ' because they had been cooked for too long.',
+    translation: '这些蔬菜因为烹煮时间过长而变得又老又韧。',
+  },
+  turnip: {
+    before: 'The farmer planted ',
+    after: ' alongside other crops that grow well in cool weather.',
+    translation: '农民种植了芜菁以及其他适合凉爽气候的作物。',
+  },
+  acidic: {
+    before: 'Some aquatic species cannot survive when the water becomes too ',
+    after: '.',
+    translation: '当水体酸性过强时，一些水生物种无法生存。',
+  },
+  shred: {
+    before: 'Please ',
+    after: ' confidential documents before placing them in the recycling bin.',
+    translation: '请先粉碎机密文件，再把它们放入回收箱。',
+  },
+  escalator: {
+    before: 'The station installed a new ',
+    after: ' to improve access for passengers carrying luggage.',
+    translation: '车站安装了一部新自动扶梯，方便携带行李的乘客通行。',
+  },
+  furnish: {
+    before: 'The charity helped ',
+    after: ' temporary homes for families displaced by the fire.',
+    translation: '该慈善机构帮助为因火灾流离失所的家庭布置临时住所。',
+  },
+  department: {
+    before: 'The health ',
+    after: ' launched a campaign to encourage childhood vaccination.',
+    translation: '卫生部门发起了一项鼓励儿童接种疫苗的宣传活动。',
+  },
+  institute: {
+    before: 'The research ',
+    after: ' publishes independent reports on public health policy.',
+    translation: '这家研究机构发布有关公共卫生政策的独立报告。',
+  },
+  federation: {
+    before: 'Each state retains considerable authority within the ',
+    after: '.',
+    translation: '联邦中的每个州都保留着相当大的权力。',
+  },
+  clarification: {
+    before: 'The committee requested further ',
+    after: ' before approving the proposed regulation.',
+    translation: '委员会要求作出进一步说明，然后才会批准拟议法规。',
+  },
+  declination: {
+    before: 'Navigators must account for magnetic ',
+    after: ' when using a compass.',
+    translation: '使用指南针时，导航人员必须考虑磁偏角。',
+  },
+  condemn: {
+    before: 'International observers were quick to ',
+    after: ' the attack on civilians.',
+    translation: '国际观察人士迅速谴责了针对平民的袭击。',
+  },
+  false: {
+    before: 'The report was withdrawn after several ',
+    after: ' claims were discovered.',
+    translation: '报告在被发现含有多项虚假说法后撤回。',
+  },
+  surname: {
+    before: 'Applicants should write their ',
+    after: ' exactly as it appears on their passport.',
+    translation: '申请人应按照护照上的拼写填写姓氏。',
+  },
+  prescribe: {
+    before: 'Doctors should not ',
+    after: ' antibiotics when an infection is caused by a virus.',
+    translation: '如果感染由病毒引起，医生不应开抗生素。',
+  },
+  temperate: {
+    before: 'Many crops grow well in a ',
+    after: ' climate with moderate rainfall.',
+    translation: '许多作物适合在降雨适中的温带气候中生长。',
+  },
+  irritant: {
+    before: 'Air pollution can act as an ',
+    after: ' and worsen existing breathing problems.',
+    translation: '空气污染会成为刺激物，加重已有的呼吸问题。',
+  },
+  slothful: {
+    before: 'A ',
+    after: ' response to the crisis allowed the damage to spread.',
+    translation: '对危机反应迟缓懒散，使损害进一步扩大。',
+  },
+  mutation: { before: 'A genetic ', after: ' may help a species adapt to a changing environment.', translation: '基因突变可能帮助物种适应不断变化的环境。' },
+  'shade-tolerant': { before: 'These ', after: ' plants can grow beneath a dense forest canopy.', translation: '这些耐阴植物能够在茂密的森林冠层下生长。' },
+  burgeon: { before: 'Online services began to ', after: ' as more households gained internet access.', translation: '随着更多家庭接入互联网，在线服务开始迅速发展。' },
+  alga: { before: 'A single ', after: ' can multiply rapidly when the water is warm and rich in nutrients.', translation: '水温较高且营养丰富时，单个藻类也能迅速繁殖。' },
+  queue: { before: 'Passengers formed a long ', after: ' outside the station after the trains were cancelled.', translation: '列车停运后，乘客在车站外排起了长队。' },
+  multimedia: { before: 'The course uses ', after: ' to present complex scientific ideas more clearly.', translation: '这门课程利用多媒体更清楚地呈现复杂的科学概念。' },
+  prefix: { before: 'Adding a ', after: ' can completely change the meaning of an English word.', translation: '添加前缀可能会彻底改变英语单词的含义。' },
+  simulative: { before: 'The laboratory provides a ', after: ' environment in which trainees can practise emergency procedures.', translation: '实验室提供模拟环境，供学员练习应急程序。' },
+  'plunge whole-heartedly': { before: 'New researchers should not ', after: ' into a project before understanding its ethical risks.', translation: '新研究人员在了解项目的伦理风险前，不应全身心贸然投入其中。' },
+  'take a bow': { before: 'The performers returned to the stage to ', after: ' after a long round of applause.', translation: '长时间的掌声过后，演员们回到舞台谢幕。' },
+  stationer: { before: 'The local ', after: ' supplies notebooks and art materials to several nearby schools.', translation: '当地文具商为附近多所学校供应笔记本和美术用品。' },
+  cementer: { before: 'The experienced ', after: ' ensured that the concrete surface was smooth and level.', translation: '经验丰富的水泥工确保混凝土表面平整光滑。' },
+  icon: { before: 'The red telephone box has become a cultural ', after: ' recognised around the world.', translation: '红色电话亭已成为享誉世界的文化标志。' },
+  cosplay: { before: 'The convention attracts thousands of ', after: ' enthusiasts dressed as fictional characters.', translation: '这场展会吸引了数千名装扮成虚构角色的角色扮演爱好者。' },
+  eggplant: { before: 'Roasted ', after: ' is widely used in dishes across the Mediterranean region.', translation: '烤茄子广泛用于地中海地区的菜肴。' },
+  'an odd fish': { before: 'His colleagues considered him ', after: ' because he preferred working alone at night.', translation: '同事们觉得他是个怪人，因为他喜欢夜间独自工作。' },
+  wasabi: { before: 'A small amount of ', after: ' gives the dish a sharp and distinctive flavour.', translation: '少量芥末就能给菜肴带来辛辣而独特的味道。' },
+  toaster: { before: 'The hotel replaced every faulty ', after: ' after a guest reported an electrical smell.', translation: '一名客人报告有电器焦味后，酒店更换了所有故障烤面包机。' },
+  handrail: { before: 'A secure ', after: ' can reduce the risk of falls on steep staircases.', translation: '牢固的扶手可以降低人们在陡峭楼梯上摔倒的风险。' },
+  urbanise: { before: 'Governments should not ', after: ' rural land without considering food security and wildlife.', translation: '政府不应在忽视粮食安全和野生动物的情况下将农村土地城市化。' },
+  malfunction: { before: 'A minor software error caused the monitoring system to ', after: ' during the test.', translation: '一个小的软件错误导致监测系统在测试期间发生故障。' },
+  viaduct: { before: 'The historic ', after: ' carries the railway across a deep valley.', translation: '这座历史悠久的高架桥承载铁路跨越深谷。' },
+  pharaoh: { before: 'The tomb was built for a ', after: ' who ruled Egypt more than three thousand years ago.', translation: '这座陵墓是为一位三千多年前统治埃及的法老修建的。' },
+  'a traffic jam': { before: 'A minor collision caused ', after: ' that lasted for nearly two hours.', translation: '一次轻微碰撞造成了持续近两小时的交通堵塞。' },
+  'traffic congestion': { before: 'Better public transport could reduce ', after: ' in the city centre.', translation: '更完善的公共交通可以缓解市中心的交通拥堵。' },
+  honk: { before: 'Drivers should not ', after: ' near hospitals unless there is an immediate danger.', translation: '除非出现紧急危险，驾驶员不应在医院附近鸣笛。' },
+  democratise: { before: 'Affordable online courses can ', after: ' access to high-quality education.', translation: '价格亲民的在线课程能够推动优质教育机会的普及。' },
+  bureaucratism: { before: 'Excessive ', after: ' can delay urgent public projects and frustrate citizens.', translation: '过度官僚主义会拖延紧急公共项目，并令市民感到不满。' },
+  premiership: { before: 'During her ', after: ', the government introduced major reforms to public health.', translation: '在她担任首相期间，政府推行了重要的公共卫生改革。' },
+  'establish a nation': { before: 'Shared institutions and public trust are essential to ', after: ' after a prolonged conflict.', translation: '长期冲突结束后，共同的制度和公众信任是建立国家的必要条件。' },
+  commercialise: { before: 'The university plans to ', after: ' the invention while keeping the patent publicly accountable.', translation: '这所大学计划将该发明商业化，同时确保专利受到公共监督。' },
+  humiliate: { before: 'Teachers should correct mistakes without trying to ', after: ' students in front of their classmates.', translation: '教师应纠正错误，但不应试图当着同学的面羞辱学生。' },
+  baptise: { before: 'The family chose to ', after: ' the child in the village church.', translation: '这家人选择在村里的教堂为孩子施洗。' },
+  obsess: { before: 'Young people should not ', after: ' over every image they see on social media.', translation: '年轻人不应对社交媒体上看到的每张图片都过度纠结。' },
+  astonish: { before: 'The speed of the medical breakthrough continued to ', after: ' researchers around the world.', translation: '这项医学突破的速度继续令世界各地的研究人员惊叹。' },
+  terrify: { before: 'Graphic warnings may ', after: ' some viewers without helping them understand the actual risk.', translation: '直观而刺激的警示可能吓坏一些观众，却不能帮助他们理解真实风险。' },
+  kidnap: { before: 'The gang attempted to ', after: ' a businessman and demand a large ransom.', translation: '该团伙企图绑架一名商人并索要巨额赎金。' },
+  hijack: { before: 'Modern security systems make it far more difficult to ', after: ' a commercial aircraft.', translation: '现代安保系统使劫持民航客机变得困难得多。' },
+  eyelash: { before: 'A tiny particle trapped beneath an ', after: ' can cause considerable discomfort.', translation: '睫毛下卡住的一粒微小颗粒也会造成明显不适。' },
+  snore: { before: 'People who ', after: ' heavily may need to be checked for sleep apnoea.', translation: '鼾声很大的人可能需要检查是否患有睡眠呼吸暂停。' },
+  doze: { before: 'Several passengers began to ', after: ' during the long and quiet journey.', translation: '在漫长而安静的旅途中，几名乘客开始打瞌睡。' },
+  pimple: { before: 'A single ', after: ' is usually harmless and should not be treated with strong medication.', translation: '单个粉刺通常无害，不应使用强效药物处理。' },
+  embarrass: { before: 'Public criticism can ', after: ' employees and discourage them from asking for help.', translation: '公开批评会使员工难堪，并让他们不敢寻求帮助。' },
 };
+
+const bookContent = bookContentData as Record<string, ExampleSentence>;
+const wordnetRelations = wordnetRelationsData as Record<string, string[]>;
 
 const relatedWords: Record<string, RelatedWord[]> = {
   atmosphere: [
@@ -612,8 +856,7 @@ function isVerb(word: string, hint: string) {
 export function createNaturalExample(word: Word): ExampleSentence | null {
   const saved = featured[word.word.toLowerCase()];
   if (saved) return saved;
-
-  return null;
+  return bookContent[word.word.toLowerCase()] ?? null;
 }
 
 export function getRelatedWords(word: string, sourceHint?: string) {
@@ -621,13 +864,22 @@ export function getRelatedWords(word: string, sourceHint?: string) {
   const all = [
     ...(relatedWords[key] ?? []),
     ...(irregularVerbs[key] ?? []),
+    ...(wordnetRelations[key] ?? []).map((related) => ({ word: related, note: '常用关联词' })),
     ...sourceHintRelations(word, sourceHint),
   ];
   const seen = new Set<string>();
-  return all.filter((item) => {
+  const filtered = all.filter((item) => {
     const identity = item.word.toLowerCase();
     if (seen.has(identity)) return false;
     seen.add(identity);
     return true;
   }).slice(0, 6);
+  if (filtered.length > 0) return filtered;
+
+  const example = featured[key] ?? bookContent[key];
+  if (!example) return [];
+  const leftWords = example.before.match(/[A-Za-z']+/g) ?? [];
+  const rightWords = example.after.match(/[A-Za-z']+/g) ?? [];
+  const phrase = [...leftWords.slice(-2), word, ...rightWords.slice(0, 1)].join(' ');
+  return [{ word: phrase, note: '例句中的常用搭配' }];
 }

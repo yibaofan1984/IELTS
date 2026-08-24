@@ -23,6 +23,14 @@ const chapterNames = [
 const corrections: Record<string, string> = {
   slothfu: 'slothful',
   temperat: 'temperate',
+  escalato: 'escalator',
+  epartment: 'department',
+  instituted: 'institute',
+  federationn: 'federation',
+  cation: 'clarification',
+  comdemn: 'condemn',
+  fasle: 'false',
+  'debate about/on/upon sth': 'debate',
 };
 
 function chineseHint(hint: string) {
