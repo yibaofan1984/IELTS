@@ -8,6 +8,7 @@ type Word = { chapter: number; chapterName: string; list: number; number: number
 type Chapter = { id: number; name: string; words: Word[] };
 type Result = 'correct' | 'wrong' | null;
 type MistakeCounts = Record<string, number>;
+type WordOrder = 'sequential' | 'random';
 
 const chapters = chaptersData as Chapter[];
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
@@ -73,6 +74,8 @@ export default function Home() {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [ready, setReady] = useState(false);
+  const [wordOrder, setWordOrder] = useState<WordOrder>('sequential');
+  const [showFirstLetter, setShowFirstLetter] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const retryTimerRef = useRef<number | null>(null);
 
@@ -88,6 +91,7 @@ export default function Home() {
   const relatedWords = current ? getRelatedWords(current.word) : [];
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
+  const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
 
   useEffect(() => {
     try {
@@ -112,7 +116,7 @@ export default function Home() {
 
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
-    setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null);
+    setQueue(words); setMode(nextMode); setIndex(0); setAnswer(initialAnswerFor(words[0])); setResult(null);
     setHadWrongAttempt(false);
     setCorrectCount(0); setWrongCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
@@ -120,11 +124,25 @@ export default function Home() {
 
   const chooseChapter = (id: number) => {
     const selected = chapters.find((item) => item.id === id) ?? chapters[0];
-    setChapterId(id); resetRound(selected.words, 'chapter');
+    setChapterId(id); resetRound(wordOrder === 'random' ? shuffled(selected.words) : selected.words, 'chapter');
   };
 
-  const openMistakes = () => resetRound(buildMistakeQueue(mistakeWords, mistakeCounts), 'mistakes');
-  const randomize = () => resetRound(mode === 'mistakes' ? buildMistakeQueue(shuffled(mistakeWords), mistakeCounts) : shuffled(chapter.words), mode);
+  const orderedWords = (words: Word[], nextMode: 'chapter' | 'mistakes', order = wordOrder) => {
+    const list = order === 'random' ? shuffled(words) : words;
+    return nextMode === 'mistakes' ? buildMistakeQueue(list, mistakeCounts) : list;
+  };
+  const openMistakes = () => resetRound(orderedWords(mistakeWords, 'mistakes'), 'mistakes');
+  const changeWordOrder = (order: WordOrder) => {
+    setWordOrder(order);
+    resetRound(orderedWords(mode === 'mistakes' ? mistakeWords : chapter.words, mode, order), mode);
+  };
+  const toggleFirstLetter = () => {
+    const next = !showFirstLetter;
+    setShowFirstLetter(next);
+    setAnswer(next && current && /^[a-z]/i.test(current.word) ? current.word[0].toLowerCase() : '');
+    setResult(null);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
   const removeMistake = (word: Word) => setMistakeCounts((counts) => {
     const next = { ...counts };
     delete next[wordId(word)];
@@ -149,7 +167,7 @@ export default function Home() {
   const retryCurrent = () => {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     retryTimerRef.current = null;
-    setAnswer(''); setResult(null);
+    setAnswer(initialAnswerFor(current)); setResult(null);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -187,11 +205,11 @@ export default function Home() {
   const nextWord = () => {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     retryTimerRef.current = null;
-    setIndex((value) => value + 1); setAnswer(''); setResult(null); setHadWrongAttempt(false);
+    setIndex((value) => value + 1); setAnswer(initialAnswerFor(queue[index + 1])); setResult(null); setHadWrongAttempt(false);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
-  const restart = () => resetRound(mode === 'mistakes' ? buildMistakeQueue(mistakeWords, mistakeCounts) : chapter.words, mode);
+  const restart = () => resetRound(orderedWords(mode === 'mistakes' ? mistakeWords : chapter.words, mode), mode);
 
   return (
     <main className="min-h-screen bg-[#edf1f6] text-[#141b2d]">
@@ -208,7 +226,11 @@ export default function Home() {
               </select>
               <button onClick={() => resetRound(chapter.words, 'chapter')} className={`toolbar-pill ${mode === 'chapter' ? 'toolbar-pill-active' : ''}`}>▣ 看中文</button>
               <button onClick={speak} className="toolbar-pill">🔊 听音</button>
-              <button onClick={randomize} className="toolbar-pill">🎲 随机</button>
+              <div className="flex items-center rounded-full border border-[#dfe6f1] bg-white p-0.5 shadow-sm" aria-label="出词顺序">
+                <button onClick={() => changeWordOrder('sequential')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'sequential' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>▤ 顺序</button>
+                <button onClick={() => changeWordOrder('random')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'random' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>🎲 随机</button>
+              </div>
+              <button onClick={toggleFirstLetter} className={'toolbar-pill ' + (showFirstLetter ? 'toolbar-pill-active' : '')}>A 首字母</button>
               <button onClick={openMistakes} className={`toolbar-pill ${mode === 'mistakes' ? 'toolbar-pill-active' : ''}`}>📕 错词 {chapterMistakes.size}</button>
             </div>
           </div>
