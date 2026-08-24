@@ -35,6 +35,7 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<Result>(null);
+  const [hadWrongAttempt, setHadWrongAttempt] = useState(false);
   const [mistakeCounts, setMistakeCounts] = useState<MistakeCounts>({});
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
@@ -75,6 +76,7 @@ export default function Home() {
 
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
     setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null);
+    setHadWrongAttempt(false);
     setCorrectCount(0); setWrongCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
@@ -116,8 +118,13 @@ export default function Home() {
     if (isCorrect) {
       setCorrectCount((count) => count + 1);
       const nextIsSameMistake = mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === id;
-      if (mode !== 'mistakes' || !nextIsSameMistake) removeMistake(current);
+      if (mode === 'mistakes') {
+        if (!nextIsSameMistake) removeMistake(current);
+      } else if (!hadWrongAttempt) {
+        removeMistake(current);
+      }
     } else {
+      setHadWrongAttempt(true);
       setWrongCount((count) => count + 1);
       const nextErrorCount = currentErrorCount + 1;
       setMistakeCounts((counts) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }));
@@ -126,14 +133,19 @@ export default function Home() {
           let blockEnd = index + 1;
           while (blockEnd < words.length && wordId(words[blockEnd]) === id) blockEnd += 1;
           const retryBlock = Array.from({ length: repetitionTarget(nextErrorCount) }, () => current);
-          return [...words.slice(0, index + 1), ...retryBlock, ...words.slice(blockEnd)];
+          return [...words.slice(0, index), ...retryBlock, ...words.slice(blockEnd)];
         });
       }
     }
   };
 
   const nextWord = () => {
-    setIndex((value) => value + 1); setAnswer(''); setResult(null);
+    setIndex((value) => value + 1); setAnswer(''); setResult(null); setHadWrongAttempt(false);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
+  const retryCurrent = () => {
+    setAnswer(''); setResult(null);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -192,7 +204,7 @@ export default function Home() {
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
-                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value.toLowerCase())} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
+                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value.toLowerCase())} onKeyDown={(event) => { if (event.key === 'Enter') result === 'wrong' ? retryCurrent() : result === 'correct' ? nextWord() : checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
                   {expectedCharacters.map((expectedCharacter, characterIndex) => {
                     const typedCharacter = typedCharacters[characterIndex] ?? '';
                     const isLetter = /[a-z]/i.test(expectedCharacter);
@@ -206,15 +218,15 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b></span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 请重新拼写，拼对后才能进入下一题</span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
 
               <div className="mt-7 flex flex-wrap justify-center gap-2.5">
                 <button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="action-button disabled:opacity-35">📌 显示答案</button>
                 <button onClick={restart} className="action-button">🔄 重新开始</button>
                 <button onClick={speak} className="action-button">🔊 再读一次</button>
-                <button onClick={result ? nextWord : () => checkAnswer()} disabled={!result && !answer.trim()} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
+                <button onClick={result === 'wrong' ? retryCurrent : result === 'correct' ? nextWord : () => checkAnswer()} disabled={!result && !answer.trim()} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result === 'wrong' ? '↵ 重新拼写' : result === 'correct' ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
               </div>
-              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断，再按回车进入下一题</p>
+              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断；拼错后重新输入，拼对后再进入下一题</p>
             </article>
           ) : null}
 
