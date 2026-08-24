@@ -41,6 +41,7 @@ export default function Home() {
   const [wrongCount, setWrongCount] = useState(0);
   const [ready, setReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const retryTimerRef = useRef<number | null>(null);
 
   const chapter = chapters.find((item) => item.id === chapterId) ?? chapters[0];
   const current = queue[index];
@@ -75,6 +76,7 @@ export default function Home() {
   }, [current, result]);
 
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
+    if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null);
     setHadWrongAttempt(false);
     setCorrectCount(0); setWrongCount(0);
@@ -109,6 +111,13 @@ export default function Home() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const retryCurrent = () => {
+    if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = null;
+    setAnswer(''); setResult(null);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
   const checkAnswer = (reveal = false) => {
     if (!current || result) return;
     const isCorrect = !reveal && normalize(answer) === normalize(current.word);
@@ -136,16 +145,14 @@ export default function Home() {
           return [...words.slice(0, index), ...retryBlock, ...words.slice(blockEnd)];
         });
       }
+      retryTimerRef.current = window.setTimeout(retryCurrent, 1200);
     }
   };
 
   const nextWord = () => {
+    if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = null;
     setIndex((value) => value + 1); setAnswer(''); setResult(null); setHadWrongAttempt(false);
-    window.setTimeout(() => inputRef.current?.focus(), 30);
-  };
-
-  const retryCurrent = () => {
-    setAnswer(''); setResult(null);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -218,15 +225,15 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 请重新拼写，拼对后才能进入下一题</span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
 
               <div className="mt-7 flex flex-wrap justify-center gap-2.5">
                 <button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="action-button disabled:opacity-35">📌 显示答案</button>
                 <button onClick={restart} className="action-button">🔄 重新开始</button>
                 <button onClick={speak} className="action-button">🔊 再读一次</button>
-                <button onClick={result === 'wrong' ? retryCurrent : result === 'correct' ? nextWord : () => checkAnswer()} disabled={!result && !answer.trim()} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result === 'wrong' ? '↵ 重新拼写' : result === 'correct' ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
+                <button onClick={result === 'wrong' ? undefined : result === 'correct' ? nextWord : () => checkAnswer()} disabled={result === 'wrong' || (!result && !answer.trim())} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result === 'wrong' ? '自动重新拼写…' : result === 'correct' ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
               </div>
-              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断；拼错后重新输入，拼对后再进入下一题</p>
+              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断；拼错会自动重试，拼对后再进入下一题</p>
             </article>
           ) : null}
 
