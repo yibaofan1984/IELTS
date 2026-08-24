@@ -609,55 +609,11 @@ function isVerb(word: string, hint: string) {
   return /(?:^|\s)v\.?/i.test(hint) || /^(endanger|jeopardise|erupt|protect|prevent|support|provide|affect|influence|encourage|allow|require|consider|suggest|explain|compare|replace|remove|produce|consume|maintain)$/i.test(word);
 }
 
-export function createNaturalExample(word: Word): ExampleSentence {
+export function createNaturalExample(word: Word): ExampleSentence | null {
   const saved = featured[word.word.toLowerCase()];
   if (saved) return saved;
 
-  const topic = topics[word.chapter] || { en: 'contemporary society', zh: '当代社会' };
-  const gloss = meaning(word.hint);
-  const variant = (word.number * 7 + word.word.length) % 6;
-
-  if (isAdverb(word.word, word.hint)) {
-    return [
-      { before: 'The situation changed ', after: ' after the new measures were introduced.', translation: '新措施出台后，情况' + gloss + '发生了变化。' },
-      { before: 'Researchers examined the results ', after: ' before publishing their conclusions.', translation: '研究人员在发表结论前' + gloss + '分析了结果。' },
-      { before: 'Public attitudes have shifted ', after: ' over the past decade.', translation: '过去十年间，公众态度' + gloss + '发生了转变。' },
-      { before: 'The data were reviewed ', after: ' to avoid drawing premature conclusions.', translation: '为避免过早下结论，研究人员对数据进行了' + gloss + '审查。' },
-      { before: 'The number of visitors rose ', after: ' once the museum extended its opening hours.', translation: '博物馆延长开放时间后，游客数量' + gloss + '上升。' },
-      { before: 'The policy was introduced ', after: ' after months of public consultation.', translation: '经过数月公众咨询后，这项政策被' + gloss + '推出。' },
-    ][variant];
-  }
-
-  if (isAdjective(word.word, word.hint)) {
-    return [
-      { before: 'The government introduced a ', after: ' strategy to address problems in ' + topic.en + '.', translation: '政府推出了一项' + gloss + '策略，以解决' + topic.zh + '领域的问题。' },
-      { before: 'The findings were ', after: ', so the researchers repeated the experiment.', translation: '研究结果' + gloss + '，因此研究人员重复了实验。' },
-      { before: 'A more ', after: ' approach could produce better results in ' + topic.en + '.', translation: '采用更' + gloss + '的方法，可能会在' + topic.zh + '领域取得更好的结果。' },
-      { before: 'The committee rejected the proposal because it was not ', after: ' enough to be implemented.', translation: '委员会认为该提案不够' + gloss + '，因此没有采纳。' },
-      { before: 'Students are more likely to participate when the classroom feels ', after: ' and inclusive.', translation: '当课堂氛围显得' + gloss + '且包容时，学生更愿意参与。' },
-      { before: 'The report calls for a ', after: ' response that considers long-term consequences.', translation: '该报告呼吁采取' + gloss + '的应对措施，并考虑长期后果。' },
-    ][variant];
-  }
-
-  if (isVerb(word.word, word.hint) && !word.word.includes(' ')) {
-    return [
-      { before: 'Governments should ', after: ' the problem before it has a wider impact on ' + topic.en + '.', translation: '政府应当' + gloss + '这一问题，以免它对' + topic.zh + '产生更广泛的影响。' },
-      { before: 'The new programme aims to ', after: ' long-term progress in ' + topic.en + '.', translation: '这项新计划旨在' + gloss + '，推动' + topic.zh + '领域的长期进步。' },
-      { before: 'Several factors may ', after: ' the final outcome of the study.', translation: '多种因素可能会' + gloss + '这项研究的最终结果。' },
-      { before: 'Local authorities need to ', after: ' public services as the population grows.', translation: '随着人口增长，地方政府需要' + gloss + '公共服务。' },
-      { before: 'Community groups can ', after: ' practical solutions to local problems.', translation: '社区团体能够' + gloss + '当地问题的实际解决方案。' },
-      { before: 'The study explores how schools can ', after: ' students facing financial pressure.', translation: '这项研究探讨学校如何' + gloss + '面临经济压力的学生。' },
-    ][variant];
-  }
-
-  return [
-    { before: 'The discussion highlighted the role of ', after: ' in improving ' + topic.en + '.', translation: '讨论强调了' + gloss + '在改善' + topic.zh + '方面的作用。' },
-    { before: 'A better understanding of ', after: ' can help communities make informed decisions.', translation: '更好地理解' + gloss + '能够帮助社区作出明智决定。' },
-    { before: 'The project was designed to provide reliable information about ', after: ' to local residents.', translation: '该项目旨在向当地居民提供有关' + gloss + '的可靠信息。' },
-    { before: 'Researchers compared the effects of ', after: ' in several different settings.', translation: '研究人员比较了' + gloss + '在多种环境中的影响。' },
-    { before: 'The survey found that access to ', after: ' varies greatly between urban and rural areas.', translation: '调查发现，城乡居民获得' + gloss + '的机会差异很大。' },
-    { before: 'The policy aims to make ', after: ' more accessible to people on low incomes.', translation: '该政策旨在让低收入人群更容易获得' + gloss + '。' },
-  ][variant];
+  return null;
 }
 
 export function getRelatedWords(word: string, sourceHint?: string) {
