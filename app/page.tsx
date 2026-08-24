@@ -39,6 +39,7 @@ export default function Home() {
   const chapterMistakes = useMemo(() => new Set(mistakeIds.filter((id) => id.startsWith(`${chapterId}-`))), [chapterId, mistakeIds]);
   const mistakeWords = useMemo(() => chapter.words.filter((word) => chapterMistakes.has(wordId(word))), [chapter, chapterMistakes]);
   const letterCount = current?.word.match(/[a-z]/gi)?.length ?? 0;
+  const typedLetters = answer.match(/[a-z]/gi) ?? [];
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
 
@@ -155,8 +156,14 @@ export default function Home() {
               <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name} · 原书 List {current.list}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
-                <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className={`w-full bg-transparent text-center text-2xl font-black tracking-[0.12em] outline-none sm:text-3xl ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : 'text-[#172033]'}`} placeholder="输入英文拼写" />
-                <div className="mx-auto mt-5 flex flex-wrap justify-center gap-x-2 gap-y-3" aria-label={`${letterCount} 个字母`}>{Array.from({ length: letterCount }).map((_, lineIndex) => <span key={lineIndex} className={`h-[3px] w-8 rounded-full ${lineIndex === 0 && !result ? 'bg-[#7eb0ff]' : result === 'correct' ? 'bg-[#64cd9b]' : result === 'wrong' ? 'bg-[#f08b99]' : 'bg-[#ccd5e3]'}`} />)}</div>
+                <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
+                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 disabled:cursor-default" placeholder="输入英文拼写" />
+                  {Array.from({ length: letterCount }).map((_, lineIndex) => (
+                    <span key={lineIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black uppercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : lineIndex === typedLetters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>
+                      {typedLetters[lineIndex] ?? ''}
+                    </span>
+                  ))}
+                </div>
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
