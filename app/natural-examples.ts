@@ -4,6 +4,11 @@ export type ExampleSentence = {
   translation: string;
 };
 
+export type RelatedWord = {
+  word: string;
+  note: string;
+};
+
 type Word = { chapter: number; number: number; word: string; hint: string };
 
 const featured: Record<string, ExampleSentence> = {
@@ -94,6 +99,82 @@ const featured: Record<string, ExampleSentence> = {
   },
 };
 
+const relatedWords: Record<string, RelatedWord[]> = {
+  atmosphere: [
+    { word: 'atmospheric', note: 'adj. 大气的；大气层的' },
+    { word: 'atmospheric pressure', note: '大气压' },
+    { word: 'atmospheric pollution', note: '大气污染' },
+  ],
+  hydrosphere: [
+    { word: 'hydrological', note: 'adj. 水文的' },
+    { word: 'water cycle', note: '水循环' },
+  ],
+  lithosphere: [
+    { word: 'tectonic plate', note: '构造板块' },
+    { word: 'geological', note: 'adj. 地质的' },
+  ],
+  oxygen: [
+    { word: 'oxygenate', note: 'v. 供氧；使氧化' },
+    { word: 'oxygen-rich', note: 'adj. 富氧的' },
+    { word: 'oxygen supply', note: '氧气供应' },
+  ],
+  oxide: [
+    { word: 'oxidise', note: 'v. 氧化' },
+    { word: 'oxidation', note: 'n. 氧化作用' },
+  ],
+  'carbon dioxide': [
+    { word: 'carbon emissions', note: '碳排放' },
+    { word: 'greenhouse gas', note: '温室气体' },
+    { word: 'carbon-neutral', note: 'adj. 碳中和的' },
+    { word: 'CO₂', note: '二氧化碳的化学式' },
+  ],
+  hydrogen: [
+    { word: 'hydrogen fuel', note: '氢燃料' },
+    { word: 'hydrogen-powered', note: 'adj. 氢动力的' },
+  ],
+  core: [
+    { word: 'core issue', note: '核心问题' },
+    { word: 'core value', note: '核心价值观' },
+  ],
+  crust: [
+    { word: 'continental crust', note: '大陆地壳' },
+    { word: 'oceanic crust', note: '海洋地壳' },
+  ],
+  mantle: [
+    { word: 'mantle plume', note: '地幔柱' },
+    { word: 'tectonic movement', note: '构造运动' },
+  ],
+  longitude: [
+    { word: 'latitude', note: 'n. 纬度' },
+    { word: 'longitude line', note: '经线' },
+  ],
+  latitude: [
+    { word: 'longitude', note: 'n. 经度' },
+    { word: 'high latitudes', note: '高纬度地区' },
+  ],
+  altitude: [
+    { word: 'high-altitude', note: 'adj. 高海拔的' },
+    { word: 'altitude sickness', note: '高原反应' },
+  ],
+  horizon: [
+    { word: 'on the horizon', note: '即将出现；在地平线上' },
+    { word: 'broaden one’s horizons', note: '开阔眼界' },
+  ],
+  disaster: [
+    { word: 'disastrous', note: 'adj. 灾难性的' },
+    { word: 'disaster relief', note: '灾害救援' },
+    { word: 'natural disaster', note: '自然灾害' },
+  ],
+  endanger: [
+    { word: 'endangered', note: 'adj. 濒危的' },
+    { word: 'endangered species', note: '濒危物种' },
+  ],
+  jeopardise: [
+    { word: 'in jeopardy', note: '处于危险之中' },
+    { word: 'put ... in jeopardy', note: '使……陷入危险' },
+  ],
+};
+
 const topics: Record<number, { en: string; zh: string }> = {
   1: { en: 'the natural environment', zh: '自然环境' },
   2: { en: 'sustainable agriculture', zh: '可持续农业' },
@@ -172,4 +253,8 @@ export function createNaturalExample(word: Word): ExampleSentence {
     { before: 'Public concern about ', after: ' has grown significantly in recent years.', translation: '近年来，公众对' + gloss + '的关注显著增加。' },
     { before: 'The report examines how ', after: ' affects everyday life and ' + topic.en + '.', translation: '该报告研究了' + gloss + '如何影响日常生活和' + topic.zh + '。' },
   ][variant];
+}
+
+export function getRelatedWords(word: string) {
+  return relatedWords[word.toLowerCase()] ?? [];
 }

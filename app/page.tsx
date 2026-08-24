@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import chaptersData from './vocabulary.json';
-import { createNaturalExample } from './natural-examples';
+import { createNaturalExample, getRelatedWords } from './natural-examples';
 
 type Word = { chapter: number; chapterName: string; list: number; number: number; word: string; hint: string };
 type Chapter = { id: number; name: string; words: Word[] };
@@ -85,6 +85,7 @@ export default function Home() {
   const typedCharacters = Array.from(answer.toLowerCase());
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
   const exampleSentence = current ? createNaturalExample(current) : null;
+  const relatedWords = current ? getRelatedWords(current.word) : [];
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
 
@@ -261,7 +262,7 @@ export default function Home() {
 
               {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
 
-              {result === 'correct' && exampleSentence && <section aria-label="雅思例句" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]"><p className="text-[11px] font-black tracking-[0.16em] text-[#397cf4]">IELTS EXAMPLE · 雅思例句</p><p className="mt-2 text-base leading-7 text-[#26334a] sm:text-lg">{exampleSentence.before}<strong className="font-black text-[#1769d2]">{current.word}</strong>{exampleSentence.after}</p><p className="mt-2 border-t border-[#edf1f6] pt-2 text-sm leading-6 text-[#748198]">{exampleSentence.translation}</p></section>}
+              {result === 'correct' && exampleSentence && <section aria-label="雅思例句与关联词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]"><p className="text-[11px] font-black tracking-[0.16em] text-[#397cf4]">IELTS EXAMPLE · 雅思例句</p><p className="mt-2 text-base leading-7 text-[#26334a] sm:text-lg">{exampleSentence.before}<strong className="font-black text-[#1769d2]">{current.word}</strong>{exampleSentence.after}</p><p className="mt-2 border-t border-[#edf1f6] pt-2 text-sm leading-6 text-[#748198]">{exampleSentence.translation}</p>{relatedWords.length > 0 && <div className="mt-3 border-t border-[#edf1f6] pt-3"><p className="text-[11px] font-black tracking-[0.12em] text-[#7a8ba5]">RELATED WORDS · 常用关联词</p><div className="mt-2 flex flex-wrap gap-2">{relatedWords.map((item) => <span key={item.word} className="rounded-full border border-[#cddfff] bg-[#f4f8ff] px-3 py-1.5 text-xs text-[#53647c]"><b className="text-[#286fd7]">{item.word}</b><span className="ml-1.5">{item.note}</span></span>)}</div></div>}</section>}
               <div className="mt-7 flex flex-wrap justify-center gap-2.5">
                 <button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="action-button disabled:opacity-35">📌 显示答案</button>
                 <button onClick={restart} className="action-button">🔄 重新开始</button>
