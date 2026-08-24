@@ -12,6 +12,15 @@ const STORAGE_KEY = 'ielts-dictation-mistakes-v1';
 const wordId = (word: Word) => `${word.chapter}-${word.list}-${word.number}-${word.word}`;
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[’]/g, "'").replace(/\s+/g, ' ');
 
+function shuffled<T>(items: T[]) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[target]] = [copy[target], copy[index]];
+  }
+  return copy;
+}
+
 export default function Home() {
   const [chapterId, setChapterId] = useState(1);
   const [mode, setMode] = useState<'chapter' | 'mistakes'>('chapter');
@@ -21,14 +30,17 @@ export default function Home() {
   const [result, setResult] = useState<Result>(null);
   const [mistakeIds, setMistakeIds] = useState<string[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   const [ready, setReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const chapter = chapters.find((item) => item.id === chapterId) ?? chapters[0];
   const current = queue[index];
   const chapterMistakes = useMemo(() => new Set(mistakeIds.filter((id) => id.startsWith(`${chapterId}-`))), [chapterId, mistakeIds]);
+  const mistakeWords = useMemo(() => chapter.words.filter((word) => chapterMistakes.has(wordId(word))), [chapter, chapterMistakes]);
   const letterCount = current?.word.match(/[a-z]/gi)?.length ?? 0;
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
+  const complete = index >= queue.length && queue.length > 0;
 
   useEffect(() => {
     try {
@@ -43,7 +55,8 @@ export default function Home() {
   }, [mistakeIds, ready]);
 
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
-    setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null); setCorrectCount(0);
+    setQueue(words); setMode(nextMode); setIndex(0); setAnswer(''); setResult(null);
+    setCorrectCount(0); setWrongCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
 
@@ -52,7 +65,9 @@ export default function Home() {
     setChapterId(id); resetRound(selected.words, 'chapter');
   };
 
-  const openMistakes = () => resetRound(chapter.words.filter((word) => chapterMistakes.has(wordId(word))), 'mistakes');
+  const openMistakes = () => resetRound(mistakeWords, 'mistakes');
+  const randomize = () => resetRound(shuffled(mode === 'mistakes' ? mistakeWords : chapter.words), mode);
+  const removeMistake = (word: Word) => setMistakeIds((ids) => ids.filter((id) => id !== wordId(word)));
 
   const speak = () => {
     if (!current || !('speechSynthesis' in window)) return;
@@ -70,8 +85,9 @@ export default function Home() {
     setResult(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) {
       setCorrectCount((count) => count + 1);
-      if (mode === 'mistakes') setMistakeIds((ids) => ids.filter((id) => id !== wordId(current)));
+      if (mode === 'mistakes') removeMistake(current);
     } else {
+      setWrongCount((count) => count + 1);
       setMistakeIds((ids) => ids.includes(wordId(current)) ? ids : [...ids, wordId(current)]);
     }
   };
@@ -81,83 +97,100 @@ export default function Home() {
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
-  const restart = () => {
-    const words = mode === 'mistakes' ? chapter.words.filter((word) => mistakeIds.includes(wordId(word))) : chapter.words;
-    resetRound(words, mode);
-  };
-
-  const complete = index >= queue.length && queue.length > 0;
+  const restart = () => resetRound(mode === 'mistakes' ? mistakeWords : chapter.words, mode);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] text-[#173c35]">
-      <div className="pointer-events-none fixed inset-0 opacity-35 [background-image:radial-gradient(#173c35_0.7px,transparent_0.7px)] [background-size:22px_22px]" />
-      <header className="relative mx-auto flex max-w-[1380px] items-center justify-between gap-4 px-5 py-5 sm:px-8 sm:py-7">
-        <button onClick={() => chooseChapter(chapterId)} className="text-left" aria-label="返回本章练习">
-          <p className="text-[10px] font-black tracking-[0.28em] text-[#d96540] sm:text-xs">IELTS DICTATION</p>
-          <h1 className="mt-1 text-lg font-black tracking-tight sm:text-xl">雅思词汇真经 · 默写练习</h1>
-        </button>
-        <button onClick={openMistakes} className={`flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold transition ${mode === 'mistakes' ? 'border-[#d96540] bg-[#d96540] text-white' : 'border-[#173c35]/15 bg-white/80 hover:border-[#d96540]/50'}`}>
-          <span aria-hidden="true">✦</span><span>本章错词</span><span className={`rounded-full px-2 py-0.5 text-xs ${mode === 'mistakes' ? 'bg-white/20' : 'bg-[#f3dfd2] text-[#b64e2f]'}`}>{chapterMistakes.size}</span>
-        </button>
-      </header>
-
-      <div className="relative mx-auto grid max-w-[1380px] gap-5 px-5 pb-8 sm:px-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-8">
-        <aside className="hidden max-h-[calc(100vh-126px)] flex-col overflow-hidden rounded-[28px] bg-[#173c35] text-white shadow-2xl shadow-[#173c35]/15 lg:flex">
-          <div className="border-b border-white/10 p-6">
-            <p className="text-[10px] font-black tracking-[0.22em] text-[#9dcbb8]">按 CHAPTER 选择</p>
-            <p className="mt-2 text-sm text-white/55">共 {chapters.length} 章 · {chapters.reduce((sum, item) => sum + item.words.length, 0)} 个有效词条</p>
+    <main className="min-h-screen bg-[#edf1f6] text-[#141b2d]">
+      <div className="mx-auto min-h-screen max-w-[1240px] bg-[#fbfcfe] shadow-[0_0_50px_rgb(50_65_90/8%)]">
+        <header className="border-b border-[#e8edf5] px-5 py-4 sm:px-8">
+          <div className="mx-auto flex max-w-[1080px] flex-wrap items-center justify-between gap-3">
+            <button onClick={() => chooseChapter(chapterId)} className="text-left" aria-label="返回本章练习">
+              <p className="text-[10px] font-black tracking-[0.24em] text-[#397cf4]">IELTS DICTATION</p>
+              <h1 className="mt-0.5 text-base font-black sm:text-lg">雅思词汇真经 · 默写练习</h1>
+            </button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <select value={chapterId} onChange={(event) => chooseChapter(Number(event.target.value))} className="h-10 rounded-full border border-[#dfe6f1] bg-white px-4 text-sm font-bold shadow-sm outline-none">
+                {chapters.map((item) => <option key={item.id} value={item.id}>第{item.id}章 · {item.name}</option>)}
+              </select>
+              <button onClick={() => resetRound(chapter.words, 'chapter')} className={`toolbar-pill ${mode === 'chapter' ? 'toolbar-pill-active' : ''}`}>▣ 看中文</button>
+              <button onClick={speak} className="toolbar-pill">🔊 听音</button>
+              <button onClick={randomize} className="toolbar-pill">🎲 随机</button>
+              <button onClick={openMistakes} className={`toolbar-pill ${mode === 'mistakes' ? 'toolbar-pill-active' : ''}`}>📕 错词 {chapterMistakes.size}</button>
+            </div>
           </div>
-          <nav className="chapter-scroll flex-1 overflow-y-auto p-3" aria-label="章节列表">
-            {chapters.map((item) => {
-              const count = mistakeIds.filter((id) => id.startsWith(`${item.id}-`)).length;
-              const active = item.id === chapterId;
-              return (
-                <button key={item.id} onClick={() => chooseChapter(item.id)} className={`group mb-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${active ? 'bg-white text-[#173c35]' : 'text-white/72 hover:bg-white/8 hover:text-white'}`}>
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl text-xs font-black ${active ? 'bg-[#f2a36f] text-[#173c35]' : 'bg-white/9 text-white/55'}`}>{String(item.id).padStart(2, '0')}</span>
-                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.name}</strong><small className={`text-[11px] ${active ? 'text-[#173c35]/48' : 'text-white/38'}`}>{item.words.length} 词</small></span>
-                  {count > 0 && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? 'bg-[#f8e5da] text-[#b64e2f]' : 'bg-[#d96540]/20 text-[#f6ab8f]'}`}>{count}</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </aside>
+        </header>
 
-        <section className="min-w-0">
-          <div className="mb-4 flex items-center gap-3 rounded-2xl bg-[#173c35] p-3 text-white lg:hidden">
-            <span className="text-xs font-bold text-white/55">选择章节</span>
-            <select value={chapterId} onChange={(event) => chooseChapter(Number(event.target.value))} className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm font-bold outline-none">
-              {chapters.map((item) => <option key={item.id} value={item.id} className="text-[#173c35]">Chapter {item.id} · {item.name}（{item.words.length}词）</option>)}
-            </select>
+        <section className="mx-auto max-w-[1080px] px-5 pb-10 pt-5 sm:px-8">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2">
+              <button onClick={() => checkAnswer(true)} disabled={!current || Boolean(result)} className="soft-pill disabled:opacity-35">💡 提示</button>
+              <button onClick={restart} className="soft-pill">↻ 重新开始</button>
+            </div>
+            <div className="flex items-center gap-3 rounded-full bg-white px-4 py-2 font-semibold text-[#536077] shadow-sm">
+              <span>🎯 本轮进度 {Math.min(index + (result ? 1 : 0), queue.length)}/{queue.length}</span>
+              <span className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-[#e5eaf2] sm:block"><span className="block h-full rounded-full bg-[#4484f5]" style={{ width: `${progress}%` }} /></span>
+            </div>
           </div>
 
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
-            <div><p className="text-[10px] font-black tracking-[0.22em] text-[#d96540]">{mode === 'mistakes' ? 'MISTAKE REVIEW' : `CHAPTER ${chapter.id}`}</p><h2 className="mt-1 text-2xl font-black sm:text-3xl">{mode === 'mistakes' ? `${chapter.name} · 错词本` : chapter.name}</h2></div>
-            <p className="text-sm font-semibold text-[#173c35]/48">{queue.length ? `${Math.min(index + 1, queue.length)} / ${queue.length}` : '暂无题目'}</p>
+          <div className="h-2 overflow-hidden rounded-full bg-[#e2e7ef]"><div className="h-full rounded-full bg-gradient-to-r from-[#3e82f7] to-[#8b5cf6] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
+
+          <div className="mt-4 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
+            <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{Math.min(index + 1, queue.length)}/{queue.length}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">✅ 正确 <strong className="text-[#24a56a]">{correctCount}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">❌ 错误 <strong className="text-[#e65369]">{wrongCount}</strong></p>
           </div>
-          <div className="mb-5 h-2 overflow-hidden rounded-full bg-[#173c35]/8"><div className="h-full rounded-full bg-[#e2744d] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
 
           {queue.length === 0 ? (
-            <div className="grid min-h-[590px] place-items-center rounded-[34px] border border-[#173c35]/8 bg-white/90 p-8 text-center shadow-2xl shadow-[#173c35]/8"><div><div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#eef4ef] text-3xl">✓</div><h3 className="mt-6 text-2xl font-black">本章错词本是空的</h3><p className="mt-2 text-[#173c35]/55">先完成一轮默写，答错的词会自动出现在这里。</p><button onClick={() => chooseChapter(chapterId)} className="mt-7 rounded-full bg-[#173c35] px-6 py-3 font-bold text-white">开始本章练习</button></div></div>
+            <EmptyMistakes onStart={() => chooseChapter(chapterId)} />
           ) : complete ? (
-            <div className="grid min-h-[590px] place-items-center rounded-[34px] border border-[#173c35]/8 bg-white/90 p-8 text-center shadow-2xl shadow-[#173c35]/8"><div className="max-w-md"><p className="text-5xl">✦</p><h3 className="mt-5 text-3xl font-black">本轮完成</h3><p className="mt-3 text-[#173c35]/58">答对 {correctCount} 个，共练习 {queue.length} 个。{mode === 'mistakes' ? ` 本章还剩 ${chapterMistakes.size} 个错词。` : ''}</p><div className="mt-8 flex flex-wrap justify-center gap-3"><button onClick={restart} className="rounded-full bg-[#173c35] px-6 py-3 font-bold text-white">再练一轮</button><button onClick={openMistakes} className="rounded-full border border-[#173c35]/15 bg-[#f7f3ea] px-6 py-3 font-bold">练习错词本</button></div></div></div>
+            <CompleteCard correct={correctCount} total={queue.length} remaining={chapterMistakes.size} onRestart={restart} onMistakes={openMistakes} />
           ) : current ? (
-            <article className={`relative flex min-h-[590px] flex-col overflow-hidden rounded-[34px] border bg-white/95 p-6 shadow-2xl transition sm:p-10 lg:p-12 ${result === 'correct' ? 'border-[#4e9a76]/35' : result === 'wrong' ? 'border-[#d96540]/35' : 'border-[#173c35]/8'} shadow-[#173c35]/8`}>
-              <div className="flex items-center justify-between gap-4"><span className="rounded-full bg-[#eef4ef] px-4 py-2 text-xs font-black tracking-wide">中文提示</span><div className="flex items-center gap-2"><span className="hidden text-xs text-[#173c35]/40 sm:inline">听发音</span><button onClick={speak} className="grid h-12 w-12 place-items-center rounded-full bg-[#f7f3ea] text-xl transition hover:scale-105 hover:bg-[#f3e7d7]" aria-label="播放英文发音">♬</button></div></div>
-              <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
-                <p className="max-w-3xl text-2xl font-black leading-snug sm:text-3xl lg:text-[2.15rem]">{current.hint}</p>
-                <p className="mt-3 text-xs font-semibold text-[#173c35]/35">来自原书 List {current.list} · 第 {current.number} 词</p>
-                <div className="relative mt-10 w-full max-w-2xl">
-                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className={`w-full bg-transparent px-3 text-center text-2xl font-black tracking-[0.12em] outline-none sm:text-3xl ${result === 'correct' ? 'text-[#3f8a68]' : result === 'wrong' ? 'text-[#bd4d2e]' : 'text-[#173c35]'}`} placeholder="在这里输入英文" />
-                  <div className="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-x-1.5 gap-y-3" aria-label={`${letterCount} 个字母`}>{Array.from({ length: letterCount }).map((_, lineIndex) => <span key={lineIndex} className={`h-0.5 w-4 rounded-full sm:w-5 ${result === 'correct' ? 'bg-[#4e9a76]' : result === 'wrong' ? 'bg-[#d96540]' : 'bg-[#173c35]/25'}`} />)}</div>
-                  <p className="mt-3 text-[11px] font-semibold text-[#173c35]/32">{letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
-                </div>
-                {result && <div role="status" className={`mt-7 rounded-2xl px-6 py-4 ${result === 'correct' ? 'bg-[#e8f3ed] text-[#347154]' : 'bg-[#fae8df] text-[#a73f24]'}`}><p className="font-black">{result === 'correct' ? '拼写正确，很棒！' : '已加入本章错词本'}</p>{result === 'wrong' && <p className="mt-1 text-lg font-black tracking-wide">正确答案：{current.word}</p>}</div>}
+            <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
+              <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">📖 看中文拼写</span>
+              <h2 className="mt-7 max-w-3xl text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2>
+              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name} · 原书 List {current.list}</p>
+
+              <div className="mt-8 w-full max-w-[660px]">
+                <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className={`w-full bg-transparent text-center text-2xl font-black tracking-[0.12em] outline-none sm:text-3xl ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : 'text-[#172033]'}`} placeholder="输入英文拼写" />
+                <div className="mx-auto mt-5 flex flex-wrap justify-center gap-x-2 gap-y-3" aria-label={`${letterCount} 个字母`}>{Array.from({ length: letterCount }).map((_, lineIndex) => <span key={lineIndex} className={`h-[3px] w-8 rounded-full ${lineIndex === 0 && !result ? 'bg-[#7eb0ff]' : result === 'correct' ? 'bg-[#64cd9b]' : result === 'wrong' ? 'bg-[#f08b99]' : 'bg-[#ccd5e3]'}`} />)}</div>
+                <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#173c35]/8 pt-5"><button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="px-2 py-2 text-sm font-bold text-[#173c35]/45 transition hover:text-[#d96540] disabled:invisible">显示答案</button><button onClick={result ? nextWord : () => checkAnswer()} disabled={!result && !answer.trim()} className="rounded-full bg-[#e16f48] px-7 py-3.5 font-black text-white shadow-lg shadow-[#e16f48]/25 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35">{result ? '下一个 →' : '检查答案 →'}</button></div>
+
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : '已加入本章错词本'}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b></span>}</div>}
+
+              <div className="mt-7 flex flex-wrap justify-center gap-2.5">
+                <button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="action-button disabled:opacity-35">📌 显示答案</button>
+                <button onClick={restart} className="action-button">🔄 重新开始</button>
+                <button onClick={speak} className="action-button">🔊 再读一次</button>
+                <button onClick={result ? nextWord : () => checkAnswer()} disabled={!result && !answer.trim()} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
+              </div>
+              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断，再按回车进入下一题</p>
             </article>
           ) : null}
+
+          <div className="mt-3 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+            <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
+              <div className="flex items-center justify-between"><h3 className="font-black">📕 本章错词本（{mistakeWords.length}）</h3><button onClick={openMistakes} className="text-xs font-bold text-[#377df2]">开始复习 →</button></div>
+              <div className="mt-3 flex min-h-10 flex-wrap gap-2">
+                {mistakeWords.length ? mistakeWords.slice(0, 14).map((word) => <span key={wordId(word)} className="inline-flex items-center gap-1.5 rounded-full border border-[#f2b7c0] bg-[#fff5f6] px-3 py-1.5 text-xs"><b>{word.word}</b><button onClick={() => removeMistake(word)} className="text-[#a85c68]" aria-label={`移除 ${word.word}`}>×</button></span>) : <p className="text-sm text-[#98a4b7]">暂无错词，继续保持。</p>}
+                {mistakeWords.length > 14 && <span className="rounded-full bg-[#f1f4f8] px-3 py-1.5 text-xs font-bold text-[#69758a]">还有 {mistakeWords.length - 14} 个</span>}
+              </div>
+            </section>
+            <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
+              <h3 className="font-black">📚 当前单元</h3>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-[#f5f8fc] px-4 py-3"><span><b>Chapter {chapter.id}</b><small className="ml-2 text-[#7e8ba0]">{chapter.name}</small></span><strong className="text-[#397cf4]">{chapter.words.length} 词</strong></div>
+            </section>
+          </div>
         </section>
       </div>
     </main>
   );
+}
+
+function EmptyMistakes({ onStart }: { onStart: () => void }) {
+  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">✅</p><h2 className="mt-4 text-2xl font-black">本章错词本是空的</h2><p className="mt-2 text-[#7d899d]">答错的词会自动收录到这里。</p><button onClick={onStart} className="action-button action-primary mt-6">开始本章练习</button></div></div>;
+}
+
+function CompleteCard({ correct, total, remaining, onRestart, onMistakes }: { correct: number; total: number; remaining: number; onRestart: () => void; onMistakes: () => void }) {
+  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">🎉</p><h2 className="mt-4 text-3xl font-black">本轮完成</h2><p className="mt-2 text-[#718096]">答对 {correct} 个，共练习 {total} 个，本章剩余错词 {remaining} 个。</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRestart} className="action-button">再练一轮</button><button onClick={onMistakes} className="action-button action-primary">练习错词</button></div></div></div>;
 }

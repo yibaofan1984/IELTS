@@ -7,9 +7,13 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: #f0a06f; color: #173c35; }
 
-.chapter-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 18%) transparent; }
-.chapter-scroll::-webkit-scrollbar { width: 6px; }
-.chapter-scroll::-webkit-scrollbar-thumb { border-radius: 999px; background: rgb(255 255 255 / 18%); }
+@layer components {
+  .toolbar-pill { @apply h-10 rounded-full border border-[#dfe6f1] bg-white px-4 text-sm font-bold text-[#59667b] shadow-sm transition hover:border-[#8db6ff] hover:text-[#397cf4]; }
+  .toolbar-pill-active { @apply border-[#397cf4] bg-[#397cf4] text-white hover:text-white; }
+  .soft-pill { @apply rounded-full bg-white px-4 py-2 text-sm font-bold text-[#556278] shadow-sm transition hover:text-[#397cf4]; }
+  .action-button { @apply rounded-full border border-[#dce4ef] bg-white px-5 py-2.5 text-sm font-bold text-[#45536a] shadow-sm transition hover:-translate-y-0.5 hover:border-[#8eb7ff] hover:text-[#397cf4]; }
+  .action-primary { @apply border-[#397cf4] bg-[#397cf4] text-white shadow-[#397cf4]/25 hover:text-white; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
