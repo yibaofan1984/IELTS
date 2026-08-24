@@ -6,11 +6,14 @@ import chaptersData from './vocabulary.json';
 type Word = { chapter: number; chapterName: string; list: number; number: number; word: string; hint: string };
 type Chapter = { id: number; name: string; words: Word[] };
 type Result = 'correct' | 'wrong' | null;
+type MistakeCounts = Record<string, number>;
 
 const chapters = chaptersData as Chapter[];
-const STORAGE_KEY = 'ielts-dictation-mistakes-v1';
+const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
+const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
 const wordId = (word: Word) => `${word.chapter}-${word.list}-${word.number}-${word.word}`;
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[’]/g, "'").replace(/\s+/g, ' ');
+const repetitionTarget = (errorCount: number) => Math.min(6, Math.max(2, errorCount + 1));
 
 function shuffled<T>(items: T[]) {
   const copy = [...items];
@@ -21,6 +24,10 @@ function shuffled<T>(items: T[]) {
   return copy;
 }
 
+function buildMistakeQueue(words: Word[], counts: MistakeCounts) {
+  return words.flatMap((word) => Array.from({ length: repetitionTarget(counts[wordId(word)] ?? 1) }, () => word));
+}
+
 export default function Home() {
   const [chapterId, setChapterId] = useState(1);
   const [mode, setMode] = useState<'chapter' | 'mistakes'>('chapter');
@@ -28,7 +35,7 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<Result>(null);
-  const [mistakeIds, setMistakeIds] = useState<string[]>([]);
+  const [mistakeCounts, setMistakeCounts] = useState<MistakeCounts>({});
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [ready, setReady] = useState(false);
@@ -36,24 +43,30 @@ export default function Home() {
 
   const chapter = chapters.find((item) => item.id === chapterId) ?? chapters[0];
   const current = queue[index];
-  const chapterMistakes = useMemo(() => new Set(mistakeIds.filter((id) => id.startsWith(`${chapterId}-`))), [chapterId, mistakeIds]);
+  const chapterMistakes = useMemo(() => new Set(Object.keys(mistakeCounts).filter((id) => id.startsWith(`${chapterId}-`))), [chapterId, mistakeCounts]);
   const mistakeWords = useMemo(() => chapter.words.filter((word) => chapterMistakes.has(wordId(word))), [chapter, chapterMistakes]);
   const letterCount = current?.word.match(/[a-z]/gi)?.length ?? 0;
-  const typedLetters = answer.match(/[a-z]/gi) ?? [];
+  const typedLetters = answer.toLowerCase().match(/[a-z]/g) ?? [];
+  const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
   const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
   const complete = index >= queue.length && queue.length > 0;
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-      if (Array.isArray(saved)) setMistakeIds(saved.filter((item): item is string => typeof item === 'string'));
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+        setMistakeCounts(Object.fromEntries(Object.entries(saved).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)));
+      } else {
+        const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) ?? '[]');
+        if (Array.isArray(legacy)) setMistakeCounts(Object.fromEntries(legacy.filter((item): item is string => typeof item === 'string').map((id) => [id, 1])));
+      }
     } catch { /* Ignore invalid local data. */ }
     setReady(true);
   }, []);
 
   useEffect(() => {
-    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify(mistakeIds));
-  }, [mistakeIds, ready]);
+    if (ready) localStorage.setItem(STORAGE_KEY, JSON.stringify(mistakeCounts));
+  }, [mistakeCounts, ready]);
 
   useEffect(() => {
     if (current && !result) inputRef.current?.focus();
@@ -70,9 +83,18 @@ export default function Home() {
     setChapterId(id); resetRound(selected.words, 'chapter');
   };
 
-  const openMistakes = () => resetRound(mistakeWords, 'mistakes');
-  const randomize = () => resetRound(shuffled(mode === 'mistakes' ? mistakeWords : chapter.words), mode);
-  const removeMistake = (word: Word) => setMistakeIds((ids) => ids.filter((id) => id !== wordId(word)));
+  const openMistakes = () => resetRound(buildMistakeQueue(mistakeWords, mistakeCounts), 'mistakes');
+  const randomize = () => resetRound(mode === 'mistakes' ? buildMistakeQueue(shuffled(mistakeWords), mistakeCounts) : shuffled(chapter.words), mode);
+  const removeMistake = (word: Word) => setMistakeCounts((counts) => {
+    const next = { ...counts };
+    delete next[wordId(word)];
+    return next;
+  });
+  const clearChapterMistakes = () => {
+    if (!chapterMistakes.size || !window.confirm(`确定清空第${chapterId}章的全部错词和错误次数吗？`)) return;
+    setMistakeCounts((counts) => Object.fromEntries(Object.entries(counts).filter(([id]) => !id.startsWith(`${chapterId}-`))));
+    if (mode === 'mistakes') resetRound([], 'mistakes');
+  };
 
   const speak = () => {
     if (!current || !('speechSynthesis' in window)) return;
@@ -87,13 +109,24 @@ export default function Home() {
   const checkAnswer = (reveal = false) => {
     if (!current || result) return;
     const isCorrect = !reveal && normalize(answer) === normalize(current.word);
+    const id = wordId(current);
     setResult(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) {
       setCorrectCount((count) => count + 1);
-      if (mode === 'mistakes') removeMistake(current);
+      const nextIsSameMistake = mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === id;
+      if (mode !== 'mistakes' || !nextIsSameMistake) removeMistake(current);
     } else {
       setWrongCount((count) => count + 1);
-      setMistakeIds((ids) => ids.includes(wordId(current)) ? ids : [...ids, wordId(current)]);
+      const nextErrorCount = currentErrorCount + 1;
+      setMistakeCounts((counts) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }));
+      if (mode === 'mistakes') {
+        setQueue((words) => {
+          let blockEnd = index + 1;
+          while (blockEnd < words.length && wordId(words[blockEnd]) === id) blockEnd += 1;
+          const retryBlock = Array.from({ length: repetitionTarget(nextErrorCount) }, () => current);
+          return [...words.slice(0, index + 1), ...retryBlock, ...words.slice(blockEnd)];
+        });
+      }
     }
   };
 
@@ -102,7 +135,7 @@ export default function Home() {
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
-  const restart = () => resetRound(mode === 'mistakes' ? mistakeWords : chapter.words, mode);
+  const restart = () => resetRound(mode === 'mistakes' ? buildMistakeQueue(mistakeWords, mistakeCounts) : chapter.words, mode);
 
   return (
     <main className="min-h-screen bg-[#edf1f6] text-[#141b2d]">
@@ -157,9 +190,9 @@ export default function Home() {
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
-                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 disabled:cursor-default" placeholder="输入英文拼写" />
+                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(event.target.value.toLowerCase())} onKeyDown={(event) => { if (event.key === 'Enter') result ? nextWord() : checkAnswer(); }} disabled={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 disabled:cursor-default" placeholder="输入英文拼写" />
                   {Array.from({ length: letterCount }).map((_, lineIndex) => (
-                    <span key={lineIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black uppercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : lineIndex === typedLetters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>
+                    <span key={lineIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black lowercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : lineIndex === typedLetters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>
                       {typedLetters[lineIndex] ?? ''}
                     </span>
                   ))}
@@ -167,7 +200,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : '已加入本章错词本'}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b></span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b></span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
 
               <div className="mt-7 flex flex-wrap justify-center gap-2.5">
                 <button onClick={() => checkAnswer(true)} disabled={Boolean(result)} className="action-button disabled:opacity-35">📌 显示答案</button>
@@ -181,11 +214,12 @@ export default function Home() {
 
           <div className="mt-3 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
             <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
-              <div className="flex items-center justify-between"><h3 className="font-black">📕 本章错词本（{mistakeWords.length}）</h3><button onClick={openMistakes} className="text-xs font-bold text-[#377df2]">开始复习 →</button></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-black">📕 本章错词本（{mistakeWords.length}）</h3><div className="flex items-center gap-3"><button onClick={clearChapterMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#df4f65] disabled:cursor-not-allowed disabled:opacity-35">清空错词表</button><button onClick={openMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#377df2] disabled:cursor-not-allowed disabled:opacity-35">开始复习 →</button></div></div>
               <div className="mt-3 flex min-h-10 flex-wrap gap-2">
-                {mistakeWords.length ? mistakeWords.slice(0, 14).map((word) => <span key={wordId(word)} className="inline-flex items-center gap-1.5 rounded-full border border-[#f2b7c0] bg-[#fff5f6] px-3 py-1.5 text-xs"><b>{word.word}</b><button onClick={() => removeMistake(word)} className="text-[#a85c68]" aria-label={`移除 ${word.word}`}>×</button></span>) : <p className="text-sm text-[#98a4b7]">暂无错词，继续保持。</p>}
+                {mistakeWords.length ? mistakeWords.slice(0, 14).map((word) => { const errors = mistakeCounts[wordId(word)] ?? 1; return <span key={wordId(word)} className="inline-flex items-center gap-1.5 rounded-full border border-[#f2b7c0] bg-[#fff5f6] px-3 py-1.5 text-xs"><b>{word.word}</b><span className="text-[#c34d60]">错 {errors} 次 · 连写 {repetitionTarget(errors)} 次</span><button onClick={() => removeMistake(word)} className="text-[#a85c68]" aria-label={`移除 ${word.word}`}>×</button></span>; }) : <p className="text-sm text-[#98a4b7]">暂无错词，继续保持。</p>}
                 {mistakeWords.length > 14 && <span className="rounded-full bg-[#f1f4f8] px-3 py-1.5 text-xs font-bold text-[#69758a]">还有 {mistakeWords.length - 14} 个</span>}
               </div>
+              {mistakeWords.length > 0 && <p className="mt-3 text-[11px] font-semibold text-[#98a4b7]">错误次数越多，错词复习时需要连续正确拼写的次数越多（最多 6 次）。</p>}
             </section>
             <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
               <h3 className="font-black">📚 当前单元</h3>
