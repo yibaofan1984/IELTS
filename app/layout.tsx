@@ -7,13 +7,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: '雅思词汇真经 · 默写练习',
     description: '按 Chapter 默写，提供中文与发音提示，答错自动加入专属错词本。',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: '雅思词汇真经默写练习' }],
+    images: [{ url: 'https://yibaofan1984.github.io/IELTS/og.png', width: 1200, height: 630, alt: '雅思词汇真经默写练习' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: '雅思词汇真经 · 默写练习',
     description: '按 Chapter 默写，提供中文与发音提示，答错自动加入专属错词本。',
-    images: ['/og.png'],
+    images: ['https://yibaofan1984.github.io/IELTS/og.png'],
   },
 };
 

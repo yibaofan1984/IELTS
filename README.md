@@ -2,6 +2,8 @@
 
 一个按 Chapter 组织的《雅思词汇真经》在线默写练习网站。
 
+在线访问：[https://yibaofan1984.github.io/IELTS/](https://yibaofan1984.github.io/IELTS/)
+
 ## 功能
 
 - 按书中的 22 个 Chapter 选择练习单元
