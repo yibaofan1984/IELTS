@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+::selection { background: #f0a06f; color: #173c35; }
+
+.chapter-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 18%) transparent; }
+.chapter-scroll::-webkit-scrollbar { width: 6px; }
+.chapter-scroll::-webkit-scrollbar-thumb { border-radius: 999px; background: rgb(255 255 255 / 18%); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
