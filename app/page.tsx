@@ -1,48 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import chaptersData from './vocabulary.json';
+import { chapters, migrateMistakeId, type BookWord } from './book-chapters';
 import { createNaturalExample, getRelatedWords } from './natural-examples';
 
-type Word = { chapter: number; chapterName: string; list: number; number: number; word: string; hint: string };
-type Chapter = { id: number; name: string; words: Word[] };
+type Word = BookWord;
 type Result = 'correct' | 'wrong' | null;
 type MistakeCounts = Record<string, number>;
 type WordOrder = 'sequential' | 'random';
 type PromptMode = 'chinese' | 'audio';
 
-// The first printed block in Chapter 21 precedes "cripple" in the book.
-const chapter21OpeningWords: Word[] = [
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 1, word: 'feel', hint: '感觉到，感知；触碰' },
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 2, word: 'mood', hint: '心情，情绪；气氛' },
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 3, word: 'emotion', hint: '情绪，情感，感情' },
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 4, word: 'attitude', hint: '看法，态度' },
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 5, word: 'character', hint: '性格；特征；人物，角色' },
-  { chapter: 21, chapterName: '身心健康', list: 57, number: 6, word: 'personality', hint: '个性，人格' },
-];
-const sourceChapters = chaptersData as Chapter[];
-const chapter21WordIdMigrations = new Map(
-  (sourceChapters.find((chapter) => chapter.id === 21)?.words ?? [])
-    .filter((word) => word.list === 57)
-    .map((word) => [
-      '21-57-' + word.number + '-' + word.word,
-      '21-57-' + (word.number + chapter21OpeningWords.length) + '-' + word.word,
-    ]),
-);
-const chapters = sourceChapters.map((chapter) => chapter.id === 21
-  ? {
-      ...chapter,
-      words: [
-        ...chapter21OpeningWords,
-        ...chapter.words.map((word) => word.list === 57
-          ? { ...word, number: word.number + chapter21OpeningWords.length }
-          : word),
-      ],
-    }
-  : chapter);
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
 const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
-const wordId = (word: Word) => `${word.chapter}-${word.list}-${word.number}-${word.word}`;
+const wordId = (word: Word) => word.sourceId ?? (word.chapter + '-' + word.list + '-' + word.number + '-' + word.word);
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[’]/g, "'").replace(/\s+/g, ' ');
 const repetitionTarget = (errorCount: number) => Math.min(6, Math.max(2, errorCount + 1));
 const chapterContexts: Record<number, { en: string; zh: string }> = {
@@ -111,7 +81,8 @@ export default function Home() {
 
   const chapter = chapters.find((item) => item.id === chapterId) ?? chapters[0];
   const current = queue[index];
-  const chapterMistakes = useMemo(() => new Set(Object.keys(mistakeCounts).filter((id) => id.startsWith(`${chapterId}-`))), [chapterId, mistakeCounts]);
+  const chapterWordIds = useMemo(() => new Set(chapter.words.map(wordId)), [chapter]);
+  const chapterMistakes = useMemo(() => new Set([...chapterWordIds].filter((id) => mistakeCounts[id] > 0)), [chapterWordIds, mistakeCounts]);
   const mistakeWords = useMemo(() => chapter.words.filter((word) => chapterMistakes.has(wordId(word))), [chapter, chapterMistakes]);
   const letterCount = current?.word.match(/[a-z]/gi)?.length ?? 0;
   const expectedCharacters = Array.from(current?.word.toLowerCase() ?? '');
@@ -127,9 +98,14 @@ export default function Home() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
       if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-        setMistakeCounts(Object.fromEntries(Object.entries(saved)
+        const migrated = Object.entries(saved)
           .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
-          .map(([id, count]) => [chapter21WordIdMigrations.get(id) ?? id, count])));
+          .reduce<MistakeCounts>((counts, [id, count]) => {
+            const key = migrateMistakeId(id);
+            counts[key] = Math.max(counts[key] ?? 0, count);
+            return counts;
+          }, {});
+        setMistakeCounts(migrated);
       } else {
         const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) ?? '[]');
         if (Array.isArray(legacy)) setMistakeCounts(Object.fromEntries(legacy.filter((item): item is string => typeof item === 'string').map((id) => [id, 1])));
@@ -181,8 +157,8 @@ export default function Home() {
     return next;
   });
   const clearChapterMistakes = () => {
-    if (!chapterMistakes.size || !window.confirm(`确定清空第${chapterId}章的全部错词和错误次数吗？`)) return;
-    setMistakeCounts((counts) => Object.fromEntries(Object.entries(counts).filter(([id]) => !id.startsWith(`${chapterId}-`))));
+    if (!chapterMistakes.size || !window.confirm('确定清空本章的全部错词和错误次数吗？')) return;
+    setMistakeCounts((counts) => Object.fromEntries(Object.entries(counts).filter(([id]) => !chapterWordIds.has(id))));
     if (mode === 'mistakes') resetRound([], 'mistakes');
   };
 
@@ -309,7 +285,7 @@ export default function Home() {
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
               {promptMode === 'chinese' ? <h2 className="mt-7 max-w-3xl text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
-              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name} · 原书 List {current.list}</p>
+              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
