@@ -313,7 +313,7 @@ export default function Home() {
           ) : current ? (
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
-              {promptMode === 'chinese' ? <h2 className="mt-7 max-w-3xl text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
+              {promptMode === 'chinese' ? <div className="mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"><h2 className="text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2><span className="rounded-full border border-[#d6e4fb] bg-[#f2f7ff] px-2.5 py-1 text-xs font-black text-[#397cf4]">{current.partOfSpeech}</span></div> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
               <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}</p>
 
               <div className="mt-8 w-full max-w-[660px]">

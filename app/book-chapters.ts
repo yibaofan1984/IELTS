@@ -1,4 +1,5 @@
 import sourceData from './vocabulary.json';
+import partOfSpeechData from './word-parts-of-speech.json';
 
 export type BookWord = {
   chapter: number;
@@ -7,6 +8,7 @@ export type BookWord = {
   number: number;
   word: string;
   hint: string;
+  partOfSpeech?: string;
   sourceHint?: string;
   sourceId?: string;
 };
@@ -33,6 +35,8 @@ const corrections: Record<string, string> = {
   'debate about/on/upon sth': 'debate',
 };
 
+const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
+
 function chineseHint(hint: string) {
   return hint
     .replace(/\[[^\]]*]/g, '')
@@ -48,6 +52,7 @@ function chineseHint(hint: string) {
 const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => ({
   ...word,
   word: corrections[word.word] ?? word.word,
+  partOfSpeech: partOfSpeechByWord[(corrections[word.word] ?? word.word).toLowerCase()] ?? '词组',
   sourceHint: word.hint,
   hint: chineseHint(word.hint),
   sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
@@ -56,15 +61,15 @@ const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.
 function insertBefore(target: string, word: Omit<BookWord, 'sourceId'>) {
   const index = stream.findIndex((item) => item.word === target);
   if (index < 0) throw new Error('Missing insertion point: ' + target);
-  stream.splice(index, 0, { ...word, sourceHint: word.sourceHint ?? word.hint, sourceId: 'book-' + word.word });
+  stream.splice(index, 0, { ...word, partOfSpeech: word.partOfSpeech ?? partOfSpeechByWord[word.word.toLowerCase()] ?? '词组', sourceHint: word.sourceHint ?? word.hint, sourceId: 'book-' + word.word });
 }
 
 // These two headwords are printed in the book but were absent from the old imported list.
 insertBefore('fashionable', {
-  chapter: 11, chapterName: '时尚潮流', list: 28, number: 1, word: 'fashion', hint: '时尚；流行款式',
+  chapter: 11, chapterName: '时尚潮流', list: 28, number: 1, word: 'fashion', hint: '时尚；流行款式', partOfSpeech: partOfSpeechByWord.fashion,
 });
 insertBefore('diet', {
-  chapter: 12, chapterName: '饮食健康', list: 29, number: 1, word: 'food', hint: '食物；食品',
+  chapter: 12, chapterName: '饮食健康', list: 29, number: 1, word: 'food', hint: '食物；食品', partOfSpeech: partOfSpeechByWord.food,
 });
 
 const firstWords = [
