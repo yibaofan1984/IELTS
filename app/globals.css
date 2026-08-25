@@ -7,6 +7,37 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: #f0a06f; color: #173c35; }
 
+.word-position-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: ew-resize;
+  background: transparent;
+  outline: none;
+}
+.word-position-slider::-webkit-slider-runnable-track { height: 8px; background: transparent; }
+.word-position-slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -6px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 4px solid #397cf4;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 2px 8px rgb(57 124 244 / 35%);
+}
+.word-position-slider::-moz-range-track { height: 8px; background: transparent; }
+.word-position-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 4px solid #397cf4;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 2px 8px rgb(57 124 244 / 35%);
+}
+.word-position-slider:focus-visible::-webkit-slider-thumb { outline: 3px solid rgb(57 124 244 / 25%); outline-offset: 3px; }
+.word-position-slider:focus-visible::-moz-range-thumb { outline: 3px solid rgb(57 124 244 / 25%); outline-offset: 3px; }
+
 @layer components {
   .toolbar-pill { @apply h-10 rounded-full border border-[#dfe6f1] bg-white px-4 text-sm font-bold text-[#59667b] shadow-sm transition hover:border-[#8db6ff] hover:text-[#397cf4]; }
   .toolbar-pill-active { @apply border-[#397cf4] bg-[#397cf4] text-white hover:text-white; }

@@ -90,7 +90,8 @@ export default function Home() {
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
   const exampleSentence = current ? createNaturalExample(current) : null;
   const relatedWords = current ? getRelatedWords(current.word, current.sourceHint, current.hint) : [];
-  const progress = queue.length ? Math.min(((index + (result ? 1 : 0)) / queue.length) * 100, 100) : 0;
+  const currentPosition = queue.length ? Math.min(index + 1, queue.length) : 0;
+  const progress = queue.length ? (currentPosition / queue.length) * 100 : 0;
   const complete = index >= queue.length && queue.length > 0;
   const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
 
@@ -230,6 +231,19 @@ export default function Home() {
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
+  const seekTo = (position: number) => {
+    if (!queue.length) return;
+    if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = null;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    const nextIndex = Math.max(0, Math.min(position - 1, queue.length - 1));
+    setIndex(nextIndex);
+    setAnswer(initialAnswerFor(queue[nextIndex]));
+    setResult(null);
+    setHadWrongAttempt(false);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
   const restart = () => resetRound(orderedWords(mode === 'mistakes' ? mistakeWords : chapter.words, mode), mode);
 
   return (
@@ -264,15 +278,30 @@ export default function Home() {
               <button onClick={restart} className="soft-pill">↻ 重新开始</button>
             </div>
             <div className="flex items-center gap-3 rounded-full bg-white px-4 py-2 font-semibold text-[#536077] shadow-sm">
-              <span>🎯 本轮进度 {Math.min(index + (result ? 1 : 0), queue.length)}/{queue.length}</span>
+              <span>🎯 本轮进度 {currentPosition}/{queue.length}</span>
               <span className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-[#e5eaf2] sm:block"><span className="block h-full rounded-full bg-[#4484f5]" style={{ width: `${progress}%` }} /></span>
             </div>
           </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-[#e2e7ef]"><div className="h-full rounded-full bg-gradient-to-r from-[#3e82f7] to-[#8b5cf6] transition-[width] duration-500" style={{ width: `${progress}%` }} /></div>
+          <div className="relative flex h-7 items-center" title={queue.length ? `拖动定位：第 ${currentPosition} 个词` : '当前没有可练习的单词'}>
+            <div className="pointer-events-none absolute inset-x-0 h-2 overflow-hidden rounded-full bg-[#e2e7ef]">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#3e82f7] to-[#8b5cf6]" style={{ width: `${progress}%` }} />
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={Math.max(queue.length, 1)}
+              value={Math.max(currentPosition, 1)}
+              onInput={(event) => seekTo(Number(event.currentTarget.value))}
+              disabled={!queue.length}
+              aria-label="拖动选择从第几个单词开始背诵"
+              aria-valuetext={queue.length ? `第 ${currentPosition} 个词，共 ${queue.length} 个` : '没有单词'}
+              className="word-position-slider absolute inset-x-0 h-7 w-full disabled:cursor-not-allowed disabled:opacity-40"
+            />
+          </div>
 
-          <div className="mt-4 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
-            <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{Math.min(index + 1, queue.length)}/{queue.length}</strong></p>
+          <div className="mt-2 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
+            <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{currentPosition}/{queue.length}</strong></p>
             <p className="text-sm font-semibold text-[#59667d]">✅ 正确 <strong className="text-[#24a56a]">{correctCount}</strong></p>
             <p className="text-sm font-semibold text-[#59667d]">❌ 错误 <strong className="text-[#e65369]">{wrongCount}</strong></p>
           </div>
