@@ -15,39 +15,6 @@ const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
 const wordId = (word: Word) => word.sourceId ?? (word.chapter + '-' + word.list + '-' + word.number + '-' + word.word);
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[’]/g, "'").replace(/\s+/g, ' ');
 const repetitionTarget = (errorCount: number) => Math.min(6, Math.max(2, errorCount + 1));
-const chapterContexts: Record<number, { en: string; zh: string }> = {
-  1: { en: 'environmental systems and changes in the natural world', zh: '自然环境系统及其变化' },
-  2: { en: 'plant science and sustainable agriculture', zh: '植物科学与可持续农业' },
-  3: { en: 'wildlife protection and biodiversity', zh: '野生动物保护与生物多样性' },
-  4: { en: 'space exploration and scientific discovery', zh: '太空探索与科学发现' },
-  5: { en: 'education policy and student development', zh: '教育政策与学生发展' },
-  6: { en: 'technological innovation and modern society', zh: '科技创新与现代社会' },
-  7: { en: 'culture, history, and social identity', zh: '文化、历史与社会认同' },
-  8: { en: 'language development and communication', zh: '语言发展与交流' },
-  9: { en: 'sport, entertainment, and public life', zh: '体育、娱乐与公共生活' },
-  10: { en: 'materials, products, and everyday consumption', zh: '材料、产品与日常消费' },
-  11: { en: 'fashion trends and consumer behaviour', zh: '时尚趋势与消费行为' },
-  12: { en: 'diet, health, and personal well-being', zh: '饮食、健康与个人福祉' },
-  13: { en: 'architecture and the design of public spaces', zh: '建筑与公共空间设计' },
-  14: { en: 'transport systems and international travel', zh: '交通系统与国际旅行' },
-  15: { en: 'government policy and national development', zh: '政府政策与国家发展' },
-  16: { en: 'social change and economic development', zh: '社会变化与经济发展' },
-  17: { en: 'law, regulation, and public responsibility', zh: '法律、法规与公共责任' },
-  18: { en: 'conflict, security, and international relations', zh: '冲突、安全与国际关系' },
-  19: { en: 'social relationships and community life', zh: '社会关系与社区生活' },
-  20: { en: 'human behaviour and decision-making', zh: '人类行为与决策' },
-  21: { en: 'physical and mental health', zh: '身心健康' },
-  22: { en: 'time management and historical change', zh: '时间管理与历史变化' },
-};
-
-function createExampleSentence(word: Word) {
-  const context = chapterContexts[word.chapter] ?? { en: 'contemporary social issues', zh: '当代社会问题' };
-  const variant = word.number % 3;
-  if (variant === 0) return { before: 'The term ', after: ` is frequently used in academic discussions about ${context.en}.`, translation: `在关于${context.zh}的学术讨论中，人们经常使用“${word.word}”这个词。` };
-  if (variant === 1) return { before: 'A precise understanding of ', after: ` can strengthen an argument concerning ${context.en}.`, translation: `准确理解“${word.word}”可以增强有关${context.zh}的论证。` };
-  return { before: 'In an IELTS essay, ', after: ` may help the writer explain complex issues related to ${context.en}.`, translation: `在雅思作文中，“${word.word}”可以帮助作者解释与${context.zh}相关的复杂问题。` };
-}
-
 function shuffled<T>(items: T[]) {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -71,7 +38,6 @@ export default function Home() {
   const [hadWrongAttempt, setHadWrongAttempt] = useState(false);
   const [mistakeCounts, setMistakeCounts] = useState<MistakeCounts>({});
   const [correctCount, setCorrectCount] = useState(0);
-  const [wrongCount, setWrongCount] = useState(0);
   const [ready, setReady] = useState(false);
   const [wordOrder, setWordOrder] = useState<WordOrder>('sequential');
   const [showFirstLetter, setShowFirstLetter] = useState(false);
@@ -127,7 +93,7 @@ export default function Home() {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     setQueue(words); setMode(nextMode); setIndex(0); setAnswer(initialAnswerFor(words[0])); setResult(null);
     setHadWrongAttempt(false);
-    setCorrectCount(0); setWrongCount(0);
+    setCorrectCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
 
@@ -209,7 +175,6 @@ export default function Home() {
       }
     } else {
       setHadWrongAttempt(true);
-      setWrongCount((count) => count + 1);
       const nextErrorCount = currentErrorCount + 1;
       setMistakeCounts((counts) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }));
       if (mode === 'mistakes') {
@@ -303,7 +268,7 @@ export default function Home() {
           <div className="mt-2 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
             <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{currentPosition}/{queue.length}</strong></p>
             <p className="text-sm font-semibold text-[#59667d]">✅ 正确 <strong className="text-[#24a56a]">{correctCount}</strong></p>
-            <p className="text-sm font-semibold text-[#59667d]">❌ 错误 <strong className="text-[#e65369]">{wrongCount}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">❌ 本章错词 <strong className="text-[#e65369]">{chapterMistakes.size}</strong></p>
           </div>
 
           {queue.length === 0 ? (

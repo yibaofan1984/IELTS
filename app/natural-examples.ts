@@ -886,8 +886,8 @@ function isVerb(word: string, hint: string) {
 }
 
 export function createNaturalExample(word: Word): ExampleSentence | null {
-  const saved = featured[word.word.toLowerCase()];
-  if (saved) return saved;
+  // Only examples printed in 《雅思词汇真经》 are shown. An absent entry
+  // intentionally means that the PDF has no example for this headword.
   return bookContent[word.word.toLowerCase()] ?? null;
 }
 
@@ -911,7 +911,7 @@ export function getRelatedWords(word: string, sourceHint?: string, chineseMeanin
   }).slice(0, 6);
   if (filtered.length > 0) return filtered;
 
-  const example = featured[key] ?? bookContent[key];
+  const example = bookContent[key];
   if (!example) return [];
   const leftWords = example.before.match(/[A-Za-z']+/g) ?? [];
   const rightWords = example.after.match(/[A-Za-z']+/g) ?? [];
