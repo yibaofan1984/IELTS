@@ -164,7 +164,7 @@ export default function Home() {
     if (!current || result) return;
     const isCorrect = !reveal && normalize(answer) === normalize(current.word);
     const id = wordId(current);
-    if (!reveal && promptMode === 'audio') speak();
+    if (!reveal) speak();
     setResult(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) {
       setCorrectCount((count) => count + 1);
