@@ -214,7 +214,10 @@ export default function Home() {
   const nextWord = () => {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     retryTimerRef.current = null;
-    setIndex((value) => value + 1); setAnswer(initialAnswerFor(queue[index + 1])); setResult(null); setHadWrongAttempt(false);
+    const next = queue[index + 1];
+    const staysOnSameWord = Boolean(current && next && wordId(current) === wordId(next));
+    setIndex((value) => value + 1); setAnswer(initialAnswerFor(next)); setResult(null);
+    if (!staysOnSameWord) setHadWrongAttempt(false);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -326,7 +329,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，本词还需 {repeatEnd - index} 次</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，本词还需 {repeatEnd - index} 次</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
 
               {result === 'correct' && relatedWords.length > 0 && (
                 <section aria-label="相关常用词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
