@@ -24,8 +24,12 @@ function shuffled<T>(items: T[]) {
   return copy;
 }
 
-function buildMistakeQueue(words: Word[], counts: MistakeCounts) {
-  return words.flatMap((word) => Array.from({ length: repetitionTarget(counts[wordId(word)] ?? 1) }, () => word));
+function repeatWords(words: Word[], repetitions: number) {
+  return words.flatMap((word) => Array.from({ length: repetitions }, () => word));
+}
+
+function buildMistakeQueue(words: Word[], counts: MistakeCounts, minimumRepetitions: number) {
+  return words.flatMap((word) => Array.from({ length: Math.max(minimumRepetitions, repetitionTarget(counts[wordId(word)] ?? 1)) }, () => word));
 }
 
 export default function Home() {
@@ -40,6 +44,7 @@ export default function Home() {
   const [correctCount, setCorrectCount] = useState(0);
   const [ready, setReady] = useState(false);
   const [wordOrder, setWordOrder] = useState<WordOrder>('sequential');
+  const [dictationCount, setDictationCount] = useState(1);
   const [showFirstLetter, setShowFirstLetter] = useState(false);
   const [promptMode, setPromptMode] = useState<PromptMode>('chinese');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +64,15 @@ export default function Home() {
   const currentPosition = queue.length ? Math.min(index + 1, queue.length) : 0;
   const progress = queue.length ? (currentPosition / queue.length) * 100 : 0;
   const complete = index >= queue.length && queue.length > 0;
+  let repeatStart = index;
+  let repeatEnd = index;
+  if (current) {
+    const id = wordId(current);
+    while (repeatStart > 0 && wordId(queue[repeatStart - 1]) === id) repeatStart -= 1;
+    while (repeatEnd + 1 < queue.length && wordId(queue[repeatEnd + 1]) === id) repeatEnd += 1;
+  }
+  const currentRepeatPosition = current ? index - repeatStart + 1 : 0;
+  const currentRepeatTotal = current ? repeatEnd - repeatStart + 1 : 0;
   const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
 
   useEffect(() => {
@@ -100,17 +114,24 @@ export default function Home() {
   const chooseChapter = (id: number) => {
     const selected = chapters.find((item) => item.id === id) ?? chapters[0];
     const words = wordOrder === 'random' ? shuffled(selected.words) : wordOrder === 'reverse' ? [...selected.words].reverse() : selected.words;
-    setChapterId(id); resetRound(words, 'chapter');
+    setChapterId(id); resetRound(repeatWords(words, dictationCount), 'chapter');
   };
 
   const orderedWords = (words: Word[], nextMode: 'chapter' | 'mistakes', order = wordOrder) => {
     const list = order === 'random' ? shuffled(words) : order === 'reverse' ? [...words].reverse() : words;
-    return nextMode === 'mistakes' ? buildMistakeQueue(list, mistakeCounts) : list;
+    return nextMode === 'mistakes' ? buildMistakeQueue(list, mistakeCounts, dictationCount) : repeatWords(list, dictationCount);
   };
   const openMistakes = () => resetRound(orderedWords(mistakeWords, 'mistakes'), 'mistakes');
   const changeWordOrder = (order: WordOrder) => {
     setWordOrder(order);
     resetRound(orderedWords(mode === 'mistakes' ? mistakeWords : chapter.words, mode, order), mode);
+  };
+  const changeDictationCount = (count: number) => {
+    setDictationCount(count);
+    const words = mode === 'mistakes' ? mistakeWords : chapter.words;
+    const list = wordOrder === 'random' ? shuffled(words) : wordOrder === 'reverse' ? [...words].reverse() : words;
+    const nextQueue = mode === 'mistakes' ? buildMistakeQueue(list, mistakeCounts, count) : repeatWords(list, count);
+    resetRound(nextQueue, mode);
   };
   const toggleFirstLetter = () => {
     const next = !showFirstLetter;
@@ -232,6 +253,12 @@ export default function Home() {
                 <button onClick={() => changeWordOrder('reverse')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'reverse' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>⇣ 倒序</button>
                 <button onClick={() => changeWordOrder('random')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'random' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>🎲 随机</button>
               </div>
+              <label className="flex h-10 items-center gap-1.5 rounded-full border border-[#dfe6f1] bg-white px-3 text-sm font-bold text-[#59667b] shadow-sm">
+                <span>✍ 默写</span>
+                <select value={dictationCount} onChange={(event) => changeDictationCount(Number(event.target.value))} aria-label="选择每个单词连续默写次数" className="bg-transparent font-black text-[#397cf4] outline-none">
+                  {[1, 2, 3, 4, 5].map((count) => <option key={count} value={count}>{count} 次</option>)}
+                </select>
+              </label>
               <button onClick={toggleFirstLetter} className={'toolbar-pill ' + (showFirstLetter ? 'toolbar-pill-active' : '')}>A 首字母</button>
               <button onClick={openMistakes} className={`toolbar-pill ${mode === 'mistakes' ? 'toolbar-pill-active' : ''}`}>📕 错词 {chapterMistakes.size}</button>
             </div>
@@ -281,7 +308,7 @@ export default function Home() {
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
               {promptMode === 'chinese' ? <div className="mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"><h2 className="text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2><span className="rounded-full border border-[#d6e4fb] bg-[#f2f7ff] px-2.5 py-1 text-xs font-black text-[#397cf4]">{current.partOfSpeech}</span></div> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
-              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}</p>
+              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}{currentRepeatTotal > 1 ? ` · 本词第 ${currentRepeatPosition}/${currentRepeatTotal} 次` : ''}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
@@ -299,7 +326,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 含连字符' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，完成连续强化</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，本词还需 {repeatEnd - index} 次</span>}</div>}
 
               {result === 'correct' && relatedWords.length > 0 && (
                 <section aria-label="相关常用词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
