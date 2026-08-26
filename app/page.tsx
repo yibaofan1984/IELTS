@@ -7,7 +7,7 @@ import { createNaturalExample, getRelatedWords } from './natural-examples';
 type Word = BookWord;
 type Result = 'correct' | 'wrong' | null;
 type MistakeCounts = Record<string, number>;
-type WordOrder = 'sequential' | 'random';
+type WordOrder = 'sequential' | 'reverse' | 'random';
 type PromptMode = 'chinese' | 'audio';
 
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
@@ -99,11 +99,12 @@ export default function Home() {
 
   const chooseChapter = (id: number) => {
     const selected = chapters.find((item) => item.id === id) ?? chapters[0];
-    setChapterId(id); resetRound(wordOrder === 'random' ? shuffled(selected.words) : selected.words, 'chapter');
+    const words = wordOrder === 'random' ? shuffled(selected.words) : wordOrder === 'reverse' ? [...selected.words].reverse() : selected.words;
+    setChapterId(id); resetRound(words, 'chapter');
   };
 
   const orderedWords = (words: Word[], nextMode: 'chapter' | 'mistakes', order = wordOrder) => {
-    const list = order === 'random' ? shuffled(words) : words;
+    const list = order === 'random' ? shuffled(words) : order === 'reverse' ? [...words].reverse() : words;
     return nextMode === 'mistakes' ? buildMistakeQueue(list, mistakeCounts) : list;
   };
   const openMistakes = () => resetRound(orderedWords(mistakeWords, 'mistakes'), 'mistakes');
@@ -228,6 +229,7 @@ export default function Home() {
               <button onClick={() => setPromptMode('audio')} className={'toolbar-pill ' + (promptMode === 'audio' ? 'toolbar-pill-active' : '')}>🔊 听音</button>
               <div className="flex items-center rounded-full border border-[#dfe6f1] bg-white p-0.5 shadow-sm" aria-label="出词顺序">
                 <button onClick={() => changeWordOrder('sequential')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'sequential' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>▤ 顺序</button>
+                <button onClick={() => changeWordOrder('reverse')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'reverse' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>⇣ 倒序</button>
                 <button onClick={() => changeWordOrder('random')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'random' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>🎲 随机</button>
               </div>
               <button onClick={toggleFirstLetter} className={'toolbar-pill ' + (showFirstLetter ? 'toolbar-pill-active' : '')}>A 首字母</button>
