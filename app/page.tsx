@@ -74,6 +74,7 @@ export default function Home() {
   }
   const currentRepeatPosition = current ? index - repeatStart + 1 : 0;
   const currentRepeatTotal = current ? repeatEnd - repeatStart + 1 : 0;
+  const completedCorrectRepetitions = current ? currentRepeatPosition - (result === 'correct' ? 0 : 1) : 0;
   const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
 
   useEffect(() => {
@@ -258,9 +259,9 @@ export default function Home() {
                 <button onClick={() => changeWordOrder('random')} className={'rounded-full px-3 py-2 text-xs font-bold transition ' + (wordOrder === 'random' ? 'bg-[#397cf4] text-white shadow-sm' : 'text-[#60708a]')}>🎲 随机</button>
               </div>
               <label className="flex h-10 items-center gap-1.5 rounded-full border border-[#dfe6f1] bg-white px-3 text-sm font-bold text-[#59667b] shadow-sm">
-                <span>✍ 默写</span>
-                <select value={dictationCount} onChange={(event) => changeDictationCount(Number(event.target.value))} aria-label="选择每个单词连续默写次数" className="bg-transparent font-black text-[#397cf4] outline-none">
-                  {[1, 2, 3, 4, 5].map((count) => <option key={count} value={count}>{count} 次</option>)}
+                <span>✍ 正确默写</span>
+                <select value={dictationCount} onChange={(event) => changeDictationCount(Number(event.target.value))} aria-label="选择每个单词需要正确默写的遍数" className="bg-transparent font-black text-[#397cf4] outline-none">
+                  {[1, 2, 3, 4, 5].map((count) => <option key={count} value={count}>{count} 遍</option>)}
                 </select>
               </label>
               <button onClick={toggleFirstLetter} className={'toolbar-pill ' + (showFirstLetter ? 'toolbar-pill-active' : '')}>A 首字母</button>
@@ -312,7 +313,7 @@ export default function Home() {
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
               {promptMode === 'chinese' ? <div className="mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"><h2 className="text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2><span className="rounded-full border border-[#d6e4fb] bg-[#f2f7ff] px-2.5 py-1 text-xs font-black text-[#397cf4]">{current.partOfSpeech}</span></div> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
-              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}{currentRepeatTotal > 1 ? ` · 本词第 ${currentRepeatPosition}/${currentRepeatTotal} 次` : ''}</p>
+              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}{currentRepeatTotal > 1 ? ` · 本词已正确 ${completedCorrectRepetitions}/${currentRepeatTotal} 遍` : ''}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
@@ -330,7 +331,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">请继续拼写，本词还需 {repeatEnd - index} 次</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
 
               {result === 'correct' && relatedWords.length > 0 && (
                 <section aria-label="相关常用词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
@@ -353,7 +354,7 @@ export default function Home() {
                 <button onClick={speak} className="action-button">🔊 再读一次</button>
                 <button onClick={result === 'wrong' ? undefined : result === 'correct' ? nextWord : () => checkAnswer()} disabled={result === 'wrong' || (!result && !answer.trim())} className="action-button action-primary disabled:cursor-not-allowed disabled:opacity-40">{result === 'wrong' ? '自动重新拼写…' : result === 'correct' ? '↵ 下一题' : '↵ 提交 / 下一题'}</button>
               </div>
-              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断；拼错会自动重试，拼对后再进入下一题</p>
+              <p className="mt-3 text-[11px] font-semibold text-[#a4afc0]">💡 按回车判断；拼错不计遍数并自动重试，达到所选正确遍数后才能进入下一词</p>
             </article>
           ) : null}
 
