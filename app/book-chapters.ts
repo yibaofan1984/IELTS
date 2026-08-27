@@ -35,6 +35,14 @@ const corrections: Record<string, string> = {
   'debate about/on/upon sth': 'debate',
 };
 
+const sourceHintCorrections: Record<string, string> = {
+  kettle: '水壶；[美]锅；a different kettle of fish 截然不同的人；另一码事',
+};
+
+const displayHintCorrections: Record<string, string> = {
+  kettle: '水壶；锅',
+};
+
 const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
 
 function chineseHint(hint: string) {
@@ -49,14 +57,18 @@ function chineseHint(hint: string) {
     || '请参阅词书释义';
 }
 
-const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => ({
-  ...word,
-  word: corrections[word.word] ?? word.word,
-  partOfSpeech: partOfSpeechByWord[(corrections[word.word] ?? word.word).toLowerCase()] ?? '词组',
-  sourceHint: word.hint,
-  hint: chineseHint(word.hint),
-  sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
-})));
+const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => {
+  const correctedWord = corrections[word.word] ?? word.word;
+  const sourceHint = sourceHintCorrections[correctedWord] ?? word.hint;
+  return {
+    ...word,
+    word: correctedWord,
+    partOfSpeech: partOfSpeechByWord[correctedWord.toLowerCase()] ?? '词组',
+    sourceHint,
+    hint: displayHintCorrections[correctedWord] ?? chineseHint(sourceHint),
+    sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
+  };
+}));
 
 function insertBefore(target: string, word: Omit<BookWord, 'sourceId'>) {
   const index = stream.findIndex((item) => item.word === target);
