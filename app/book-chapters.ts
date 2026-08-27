@@ -37,10 +37,12 @@ const corrections: Record<string, string> = {
 
 const sourceHintCorrections: Record<string, string> = {
   kettle: '水壶；[美]锅；a different kettle of fish 截然不同的人；另一码事',
+  grain: '谷物；颗粒；a grain of 一点，些微；一粒',
 };
 
 const displayHintCorrections: Record<string, string> = {
   kettle: '水壶；锅',
+  grain: '谷物；颗粒',
 };
 
 const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
