@@ -124,8 +124,15 @@ export default function Home() {
       ? { ...generatedExample, target: current.word }
       : null;
   const relatedWords = current && bookId === 'ielts' ? getRelatedWords(current.word, current.sourceHint, current.hint) : [];
-  const currentPosition = queue.length ? Math.min(index + 1, queue.length) : 0;
-  const progress = queue.length ? (currentPosition / queue.length) * 100 : 0;
+  const practiceBlocks = useMemo(() => queue.reduce<Array<{ start: number; word: Word }>>((blocks, word, queueIndex) => {
+    const previous = blocks[blocks.length - 1];
+    if (!previous || wordId(previous.word) !== wordId(word)) blocks.push({ start: queueIndex, word });
+    return blocks;
+  }, []), [queue]);
+  const vocabularyTotal = practiceBlocks.length;
+  const currentBlockIndex = practiceBlocks.findIndex((block, blockIndex) => block.start <= index && (blockIndex === practiceBlocks.length - 1 || practiceBlocks[blockIndex + 1].start > index));
+  const currentPosition = queue.length ? Math.min(currentBlockIndex >= 0 ? currentBlockIndex + 1 : vocabularyTotal, vocabularyTotal) : 0;
+  const progress = vocabularyTotal ? (currentPosition / vocabularyTotal) * 100 : 0;
   const complete = index >= queue.length && queue.length > 0;
   let repeatStart = index;
   let repeatEnd = index;
@@ -298,11 +305,12 @@ export default function Home() {
   };
 
   const seekTo = (position: number) => {
-    if (!queue.length) return;
+    if (!queue.length || !practiceBlocks.length) return;
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     retryTimerRef.current = null;
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    const nextIndex = Math.max(0, Math.min(position - 1, queue.length - 1));
+    const targetBlock = practiceBlocks[Math.max(0, Math.min(position - 1, practiceBlocks.length - 1))];
+    const nextIndex = targetBlock.start;
     setIndex(nextIndex);
     setAnswer(initialAnswerFor(queue[nextIndex]));
     setResult(null);
@@ -355,7 +363,7 @@ export default function Home() {
               <button onClick={restart} className="soft-pill">↻ 重新开始</button>
             </div>
             <div className="flex items-center gap-3 rounded-full bg-white px-4 py-2 font-semibold text-[#536077] shadow-sm">
-              <span>🎯 本轮进度 {currentPosition}/{queue.length}</span>
+              <span>🎯 本轮词汇 {currentPosition}/{vocabularyTotal}</span>
               <span className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-[#e5eaf2] sm:block"><span className="block h-full rounded-full bg-[#4484f5]" style={{ width: `${progress}%` }} /></span>
             </div>
           </div>
@@ -367,26 +375,26 @@ export default function Home() {
             <input
               type="range"
               min={1}
-              max={Math.max(queue.length, 1)}
+              max={Math.max(vocabularyTotal, 1)}
               value={Math.max(currentPosition, 1)}
               onInput={(event) => seekTo(Number(event.currentTarget.value))}
               disabled={!queue.length}
               aria-label="拖动选择从第几个单词开始背诵"
-              aria-valuetext={queue.length ? `第 ${currentPosition} 个词，共 ${queue.length} 个` : '没有单词'}
+              aria-valuetext={queue.length ? `第 ${currentPosition} 个词，共 ${vocabularyTotal} 个` : '没有单词'}
               className="word-position-slider absolute inset-x-0 h-7 w-full disabled:cursor-not-allowed disabled:opacity-40"
             />
           </div>
 
           <div className="mt-2 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
-            <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{currentPosition}/{queue.length}</strong></p>
-            <p className="text-sm font-semibold text-[#59667d]">✅ 正确 <strong className="text-[#24a56a]">{correctCount}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">📊 词汇进度 <strong className="text-[#172033]">{currentPosition}/{vocabularyTotal}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">✅ 正确次数 <strong className="text-[#24a56a]">{correctCount}</strong></p>
             <p className="text-sm font-semibold text-[#59667d]">❌ 本单元错词 <strong className="text-[#e65369]">{chapterMistakes.size}</strong></p>
           </div>
 
           {queue.length === 0 ? (
             <EmptyMistakes onStart={() => chooseChapter(chapterId)} />
           ) : complete ? (
-            <CompleteCard correct={correctCount} total={queue.length} remaining={chapterMistakes.size} onRestart={restart} onMistakes={openMistakes} />
+            <CompleteCard total={vocabularyTotal} remaining={chapterMistakes.size} onRestart={restart} onMistakes={openMistakes} />
           ) : current ? (
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
@@ -460,6 +468,6 @@ function EmptyMistakes({ onStart }: { onStart: () => void }) {
   return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">✅</p><h2 className="mt-4 text-2xl font-black">本单元错词本是空的</h2><p className="mt-2 text-[#7d899d]">答错的词会自动收录到这里。</p><button onClick={onStart} className="action-button action-primary mt-6">开始本单元练习</button></div></div>;
 }
 
-function CompleteCard({ correct, total, remaining, onRestart, onMistakes }: { correct: number; total: number; remaining: number; onRestart: () => void; onMistakes: () => void }) {
-  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">🎉</p><h2 className="mt-4 text-3xl font-black">本轮完成</h2><p className="mt-2 text-[#718096]">答对 {correct} 个，共练习 {total} 个，本单元剩余错词 {remaining} 个。</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRestart} className="action-button">再练一轮</button><button onClick={onMistakes} className="action-button action-primary">练习错词</button></div></div></div>;
+function CompleteCard({ total, remaining, onRestart, onMistakes }: { total: number; remaining: number; onRestart: () => void; onMistakes: () => void }) {
+  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">🎉</p><h2 className="mt-4 text-3xl font-black">本轮完成</h2><p className="mt-2 text-[#718096]">已完成 {total} 个词，本单元剩余错词 {remaining} 个。</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRestart} className="action-button">再练一轮</button><button onClick={onMistakes} className="action-button action-primary">练习错词</button></div></div></div>;
 }
