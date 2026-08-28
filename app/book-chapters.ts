@@ -41,6 +41,7 @@ const sourceHintCorrections: Record<string, string> = {
   squeeze: '挤压；squeeze sth. out of/from sth. 从某物中榨出（或挤出）某物',
   snatch: '一把抓住；迅速夺取',
   trail: '（使）拖在后面；跟踪；踪迹',
+  obsess: '（使）痴迷；（使）心神不宁；be obsessed by/with 被……迷住；对……着迷',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -49,6 +50,7 @@ const displayHintCorrections: Record<string, string> = {
   squeeze: '挤压',
   snatch: '一把抓住；迅速夺取',
   trail: '（使）拖在后面；跟踪；踪迹',
+  obsess: '（使）痴迷；（使）心神不宁',
 };
 
 const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
