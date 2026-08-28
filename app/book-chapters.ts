@@ -57,6 +57,14 @@ const displayHintCorrections: Record<string, string> = {
   obsess: '（使）痴迷；（使）心神不宁',
 };
 
+const displayHintCorrectionsBySourceId: Record<string, string> = {
+  '20-53-47-range': '（在一定范围内）变化；变动',
+};
+
+const partOfSpeechCorrectionsBySourceId: Record<string, string> = {
+  '20-53-47-range': 'v.',
+};
+
 const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
 
 function chineseHint(hint: string) {
@@ -74,14 +82,15 @@ function chineseHint(hint: string) {
 const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => {
   const correctedWord = corrections[word.word] ?? word.word;
   const sourceHint = sourceHintCorrections[correctedWord] ?? word.hint;
+  const sourceId = String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word;
   return {
     ...word,
     bookId: 'ielts' as const,
     word: correctedWord,
-    partOfSpeech: partOfSpeechByWord[correctedWord.toLowerCase()] ?? '词组',
+    partOfSpeech: partOfSpeechCorrectionsBySourceId[sourceId] ?? partOfSpeechByWord[correctedWord.toLowerCase()] ?? '词组',
     sourceHint,
-    hint: displayHintCorrections[correctedWord] ?? chineseHint(sourceHint),
-    sourceId: String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word,
+    hint: displayHintCorrectionsBySourceId[sourceId] ?? displayHintCorrections[correctedWord] ?? chineseHint(sourceHint),
+    sourceId,
   };
 }));
 
