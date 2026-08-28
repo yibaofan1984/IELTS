@@ -2,8 +2,10 @@ import sourceData from './vocabulary.json';
 import partOfSpeechData from './word-parts-of-speech.json';
 
 export type BookWord = {
+  bookId?: 'ielts' | 'toefl';
   chapter: number;
   chapterName: string;
+  level?: number;
   list: number;
   number: number;
   word: string;
@@ -11,9 +13,11 @@ export type BookWord = {
   partOfSpeech?: string;
   sourceHint?: string;
   sourceId?: string;
+  example?: string;
+  exampleTranslation?: string;
 };
 
-export type BookChapter = { id: number; name: string; words: BookWord[] };
+export type BookChapter = { id: number; name: string; level?: number; sourcePages?: number[]; words: BookWord[] };
 
 const chapterNames = [
   '自然地理', '植物研究', '动物保护', '太空探索', '学校教育', '科技发明',
@@ -72,6 +76,7 @@ const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.
   const sourceHint = sourceHintCorrections[correctedWord] ?? word.hint;
   return {
     ...word,
+    bookId: 'ielts' as const,
     word: correctedWord,
     partOfSpeech: partOfSpeechByWord[correctedWord.toLowerCase()] ?? '词组',
     sourceHint,
@@ -83,7 +88,7 @@ const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.
 function insertBefore(target: string, word: Omit<BookWord, 'sourceId'>) {
   const index = stream.findIndex((item) => item.word === target);
   if (index < 0) throw new Error('Missing insertion point: ' + target);
-  stream.splice(index, 0, { ...word, partOfSpeech: word.partOfSpeech ?? partOfSpeechByWord[word.word.toLowerCase()] ?? '词组', sourceHint: word.sourceHint ?? word.hint, sourceId: 'book-' + word.word });
+  stream.splice(index, 0, { ...word, bookId: 'ielts', partOfSpeech: word.partOfSpeech ?? partOfSpeechByWord[word.word.toLowerCase()] ?? '词组', sourceHint: word.sourceHint ?? word.hint, sourceId: 'book-' + word.word });
 }
 
 // These two headwords are printed in the book but were absent from the old imported list.

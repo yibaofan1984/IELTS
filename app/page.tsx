@@ -1,14 +1,41 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { chapters, migrateMistakeId, type BookWord } from './book-chapters';
+import { chapters as ieltsChapters, migrateMistakeId, type BookChapter, type BookWord } from './book-chapters';
 import { createNaturalExample, getRelatedWords } from './natural-examples';
+import { toeflChapters } from './toefl-book';
 
 type Word = BookWord;
 type Result = 'correct' | 'wrong' | null;
 type MistakeCounts = Record<string, number>;
 type WordOrder = 'sequential' | 'reverse' | 'random';
 type PromptMode = 'chinese' | 'audio';
+type BookId = 'ielts' | 'toefl';
+
+type BookConfig = {
+  title: string;
+  chapters: BookChapter[];
+  unitOption: (chapter: BookChapter) => string;
+  unitTitle: (chapter: BookChapter) => string;
+  exampleLabel: string;
+};
+
+const BOOKS: Record<BookId, BookConfig> = {
+  ielts: {
+    title: '雅思词汇真经',
+    chapters: ieltsChapters,
+    unitOption: (chapter) => `第${chapter.id}章 · ${chapter.name}`,
+    unitTitle: (chapter) => `Chapter ${chapter.id}`,
+    exampleLabel: '雅思词书例句',
+  },
+  toefl: {
+    title: '托福词汇',
+    chapters: toeflChapters,
+    unitOption: (chapter) => `List ${chapter.id} · ${chapter.name}`,
+    unitTitle: (chapter) => `List ${chapter.id}`,
+    exampleLabel: '托福词书例句',
+  },
+};
 
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
 const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
@@ -33,10 +60,38 @@ function buildMistakeQueue(words: Word[], counts: MistakeCounts, minimumRepetiti
   return words.flatMap((word) => Array.from({ length: Math.max(minimumRepetitions, repetitionTarget(counts[wordId(word)] ?? 1)) }, () => word));
 }
 
+function splitBookExample(sentence: string, word: string, translation?: string) {
+  const sentenceLower = sentence.toLowerCase();
+  const wordLower = word.toLowerCase();
+  let start = sentenceLower.indexOf(wordLower);
+  let length = word.length;
+
+  // Inflected examples occasionally drop a final "e" (for example,
+  // investigate -> investigating). Keep the original sentence untouched and
+  // only use the match to emphasise the printed form.
+  if (start < 0 && /^[a-z]+e$/i.test(word)) {
+    const stem = word.slice(0, -1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = new RegExp(`\\b${stem}[a-z]*`, 'i').exec(sentence);
+    if (match) {
+      start = match.index;
+      length = match[0].length;
+    }
+  }
+
+  if (start < 0) return { before: sentence, target: '', after: '', translation };
+  return {
+    before: sentence.slice(0, start),
+    target: sentence.slice(start, start + length),
+    after: sentence.slice(start + length),
+    translation,
+  };
+}
+
 export default function Home() {
+  const [bookId, setBookId] = useState<BookId>('ielts');
   const [chapterId, setChapterId] = useState(1);
   const [mode, setMode] = useState<'chapter' | 'mistakes'>('chapter');
-  const [queue, setQueue] = useState<Word[]>(chapters[0].words);
+  const [queue, setQueue] = useState<Word[]>(ieltsChapters[0].words);
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<Result>(null);
@@ -51,6 +106,8 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const retryTimerRef = useRef<number | null>(null);
 
+  const activeBook = BOOKS[bookId];
+  const chapters = activeBook.chapters;
   const chapter = chapters.find((item) => item.id === chapterId) ?? chapters[0];
   const current = queue[index];
   const chapterWordIds = useMemo(() => new Set(chapter.words.map(wordId)), [chapter]);
@@ -60,8 +117,13 @@ export default function Home() {
   const expectedCharacters = Array.from(current?.word.toLowerCase() ?? '');
   const typedCharacters = Array.from(answer.toLowerCase());
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
-  const exampleSentence = current ? createNaturalExample(current) : null;
-  const relatedWords = current ? getRelatedWords(current.word, current.sourceHint, current.hint) : [];
+  const generatedExample = current && !current.example ? createNaturalExample(current) : null;
+  const exampleSentence = current?.example
+    ? splitBookExample(current.example, current.word, current.exampleTranslation)
+    : current && generatedExample
+      ? { ...generatedExample, target: current.word }
+      : null;
+  const relatedWords = current && bookId === 'ielts' ? getRelatedWords(current.word, current.sourceHint, current.hint) : [];
   const currentPosition = queue.length ? Math.min(index + 1, queue.length) : 0;
   const progress = queue.length ? (currentPosition / queue.length) * 100 : 0;
   const complete = index >= queue.length && queue.length > 0;
@@ -78,23 +140,26 @@ export default function Home() {
   const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-      if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
-        const migrated = Object.entries(saved)
-          .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
-          .reduce<MistakeCounts>((counts, [id, count]) => {
-            const key = migrateMistakeId(id);
-            counts[key] = Math.max(counts[key] ?? 0, count);
-            return counts;
-          }, {});
-        setMistakeCounts(migrated);
-      } else {
-        const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) ?? '[]');
-        if (Array.isArray(legacy)) setMistakeCounts(Object.fromEntries(legacy.filter((item): item is string => typeof item === 'string').map((id) => [id, 1])));
-      }
-    } catch { /* Ignore invalid local data. */ }
-    setReady(true);
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+          const migrated = Object.entries(saved)
+            .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
+            .reduce<MistakeCounts>((counts, [id, count]) => {
+              const key = migrateMistakeId(id);
+              counts[key] = Math.max(counts[key] ?? 0, count);
+              return counts;
+            }, {});
+          setMistakeCounts(migrated);
+        } else {
+          const legacy = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) ?? '[]');
+          if (Array.isArray(legacy)) setMistakeCounts(Object.fromEntries(legacy.filter((item): item is string => typeof item === 'string').map((id) => [id, 1])));
+        }
+      } catch { /* Ignore invalid local data. */ }
+      setReady(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -111,6 +176,15 @@ export default function Home() {
     setHadWrongAttempt(false);
     setCorrectCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const chooseBook = (nextBookId: BookId) => {
+    const nextBook = BOOKS[nextBookId];
+    const selected = nextBook.chapters[0];
+    const words = wordOrder === 'random' ? shuffled(selected.words) : wordOrder === 'reverse' ? [...selected.words].reverse() : selected.words;
+    setBookId(nextBookId);
+    setChapterId(selected.id);
+    resetRound(repeatWords(words, dictationCount), 'chapter');
   };
 
   const chooseChapter = (id: number) => {
@@ -148,7 +222,7 @@ export default function Home() {
     return next;
   });
   const clearChapterMistakes = () => {
-    if (!chapterMistakes.size || !window.confirm('确定清空本章的全部错词和错误次数吗？')) return;
+    if (!chapterMistakes.size || !window.confirm('确定清空本单元的全部错词和错误次数吗？')) return;
     setMistakeCounts((counts) => Object.fromEntries(Object.entries(counts).filter(([id]) => !chapterWordIds.has(id))));
     if (mode === 'mistakes') resetRound([], 'mistakes');
   };
@@ -243,13 +317,17 @@ export default function Home() {
       <div className="mx-auto min-h-screen max-w-[1240px] bg-[#fbfcfe] shadow-[0_0_50px_rgb(50_65_90/8%)]">
         <header className="border-b border-[#e8edf5] px-5 py-4 sm:px-8">
           <div className="mx-auto flex max-w-[1080px] flex-wrap items-center justify-between gap-3">
-            <button onClick={() => chooseChapter(chapterId)} className="text-left" aria-label="返回本章练习">
-              <p className="text-[10px] font-black tracking-[0.24em] text-[#397cf4]">IELTS DICTATION</p>
-              <h1 className="mt-0.5 text-base font-black sm:text-lg">雅思词汇真经 · 默写练习</h1>
+            <button onClick={() => chooseChapter(chapterId)} className="text-left" aria-label="返回当前单元练习">
+              <p className="text-[10px] font-black tracking-[0.24em] text-[#397cf4]">VOCAB DICTATION</p>
+              <h1 className="mt-0.5 text-base font-black sm:text-lg">{activeBook.title} · 默写练习</h1>
             </button>
             <div className="flex flex-wrap items-center justify-end gap-2">
+              <select value={bookId} onChange={(event) => chooseBook(event.target.value as BookId)} aria-label="选择词书" className="h-10 rounded-full border border-[#bfd5fb] bg-[#f2f7ff] px-4 text-sm font-black text-[#286fd7] shadow-sm outline-none">
+                <option value="ielts">雅思词汇真经</option>
+                <option value="toefl">托福词汇</option>
+              </select>
               <select value={chapterId} onChange={(event) => chooseChapter(Number(event.target.value))} className="h-10 rounded-full border border-[#dfe6f1] bg-white px-4 text-sm font-bold shadow-sm outline-none">
-                {chapters.map((item) => <option key={item.id} value={item.id}>第{item.id}章 · {item.name}</option>)}
+                {chapters.map((item) => <option key={item.id} value={item.id}>{activeBook.unitOption(item)}</option>)}
               </select>
               <button onClick={() => setPromptMode('chinese')} className={'toolbar-pill ' + (promptMode === 'chinese' ? 'toolbar-pill-active' : '')}>▣ 看中文</button>
               <button onClick={() => setPromptMode('audio')} className={'toolbar-pill ' + (promptMode === 'audio' ? 'toolbar-pill-active' : '')}>🔊 听音</button>
@@ -302,7 +380,7 @@ export default function Home() {
           <div className="mt-2 grid grid-cols-3 divide-x divide-[#edf0f5] rounded-2xl bg-white py-3 text-center shadow-[0_8px_26px_rgb(65_80_110/6%)]">
             <p className="text-sm font-semibold text-[#59667d]">📊 进度 <strong className="text-[#172033]">{currentPosition}/{queue.length}</strong></p>
             <p className="text-sm font-semibold text-[#59667d]">✅ 正确 <strong className="text-[#24a56a]">{correctCount}</strong></p>
-            <p className="text-sm font-semibold text-[#59667d]">❌ 本章错词 <strong className="text-[#e65369]">{chapterMistakes.size}</strong></p>
+            <p className="text-sm font-semibold text-[#59667d]">❌ 本单元错词 <strong className="text-[#e65369]">{chapterMistakes.size}</strong></p>
           </div>
 
           {queue.length === 0 ? (
@@ -312,12 +390,12 @@ export default function Home() {
           ) : current ? (
             <article className="mx-auto flex min-h-[410px] max-w-[820px] flex-col items-center justify-center px-2 py-8 text-center sm:py-12">
               <span className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#3e4b62] shadow-[0_5px_20px_rgb(66_80_110/7%)]">{promptMode === 'chinese' ? '📖 看中文拼写' : '🔊 听发音拼写'}</span>
-              {promptMode === 'chinese' ? <div className="mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"><h2 className="text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2><span className="rounded-full border border-[#d6e4fb] bg-[#f2f7ff] px-2.5 py-1 text-xs font-black text-[#397cf4]">{current.partOfSpeech}</span></div> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
-              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">第{chapter.id}章 · {chapter.name}{currentRepeatTotal > 1 ? ` · 本词已正确 ${completedCorrectRepetitions}/${currentRepeatTotal} 遍` : ''}</p>
+              {promptMode === 'chinese' ? <div className="mt-7 flex max-w-3xl flex-wrap items-center justify-center gap-2.5"><h2 className="text-2xl font-black leading-snug sm:text-3xl lg:text-[2.1rem]">{current.hint}</h2>{current.partOfSpeech && <span className="rounded-full border border-[#d6e4fb] bg-[#f2f7ff] px-2.5 py-1 text-xs font-black text-[#397cf4]">{current.partOfSpeech}</span>}</div> : <h2 className="mt-7 text-xl font-black leading-snug text-[#52627a] sm:text-2xl">请听发音后拼写</h2>}
+              <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">{activeBook.unitOption(chapter)}{currentRepeatTotal > 1 ? ` · 本词已正确 ${completedCorrectRepetitions}/${currentRepeatTotal} 遍` : ''}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
                 <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
-                  <input ref={inputRef} value={answer} onChange={(event) => !result && setAnswer(standardizeAnswer(event.target.value))} onKeyDown={(event) => { if (event.key === 'Enter') result === 'wrong' ? retryCurrent() : result === 'correct' ? nextWord() : checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
+                  <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
                   {expectedCharacters.map((expectedCharacter, characterIndex) => {
                     const typedCharacter = typedCharacters[characterIndex] ?? '';
                     const isLetter = /[a-z]/i.test(expectedCharacter);
@@ -331,7 +409,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本章错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本单元错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
 
               {result === 'correct' && relatedWords.length > 0 && (
                 <section aria-label="相关常用词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
@@ -342,10 +420,10 @@ export default function Home() {
                 </section>
               )}
               {result === 'correct' && exampleSentence && (
-                <section aria-label="雅思例句" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
-                  <p className="text-[11px] font-black tracking-[0.16em] text-[#397cf4]">雅思例句</p>
-                  <p className="mt-2 text-base leading-7 text-[#26334a] sm:text-lg">{exampleSentence.before}<strong className="font-black text-[#1769d2]">{current.word}</strong>{exampleSentence.after}</p>
-                  <p className="mt-2 border-t border-[#edf1f6] pt-2 text-sm leading-6 text-[#748198]">{exampleSentence.translation}</p>
+                <section aria-label={activeBook.exampleLabel} className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
+                  <p className="text-[11px] font-black tracking-[0.16em] text-[#397cf4]">{activeBook.exampleLabel}</p>
+                  <p className="mt-2 text-base leading-7 text-[#26334a] sm:text-lg">{exampleSentence.before}{exampleSentence.target && <strong className="font-black text-[#1769d2]">{exampleSentence.target}</strong>}{exampleSentence.after}</p>
+                  {exampleSentence.translation && <p className="mt-2 border-t border-[#edf1f6] pt-2 text-sm leading-6 text-[#748198]">{exampleSentence.translation}</p>}
                 </section>
               )}
               <div className="mt-7 flex flex-wrap justify-center gap-2.5">
@@ -360,7 +438,7 @@ export default function Home() {
 
           <div className="mt-3 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
             <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
-              <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-black">📕 本章错词本（{mistakeWords.length}）</h3><div className="flex items-center gap-3"><button onClick={clearChapterMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#df4f65] disabled:cursor-not-allowed disabled:opacity-35">清空错词表</button><button onClick={openMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#377df2] disabled:cursor-not-allowed disabled:opacity-35">开始复习 →</button></div></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-black">📕 本单元错词本（{mistakeWords.length}）</h3><div className="flex items-center gap-3"><button onClick={clearChapterMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#df4f65] disabled:cursor-not-allowed disabled:opacity-35">清空错词表</button><button onClick={openMistakes} disabled={!mistakeWords.length} className="text-xs font-bold text-[#377df2] disabled:cursor-not-allowed disabled:opacity-35">开始复习 →</button></div></div>
               <div className="mt-3 flex min-h-10 flex-wrap gap-2">
                 {mistakeWords.length ? mistakeWords.slice(0, 14).map((word) => { const errors = mistakeCounts[wordId(word)] ?? 1; return <span key={wordId(word)} className="inline-flex items-center gap-1.5 rounded-full border border-[#f2b7c0] bg-[#fff5f6] px-3 py-1.5 text-xs"><b>{word.word}</b><span className="text-[#c34d60]">错 {errors} 次 · 连写 {repetitionTarget(errors)} 次</span><button onClick={() => removeMistake(word)} className="text-[#a85c68]" aria-label={`移除 ${word.word}`}>×</button></span>; }) : <p className="text-sm text-[#98a4b7]">暂无错词，继续保持。</p>}
                 {mistakeWords.length > 14 && <span className="rounded-full bg-[#f1f4f8] px-3 py-1.5 text-xs font-bold text-[#69758a]">还有 {mistakeWords.length - 14} 个</span>}
@@ -369,7 +447,7 @@ export default function Home() {
             </section>
             <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
               <h3 className="font-black">📚 当前单元</h3>
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-[#f5f8fc] px-4 py-3"><span><b>Chapter {chapter.id}</b><small className="ml-2 text-[#7e8ba0]">{chapter.name}</small></span><strong className="text-[#397cf4]">{chapter.words.length} 词</strong></div>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-[#f5f8fc] px-4 py-3"><span><b>{activeBook.unitTitle(chapter)}</b><small className="ml-2 text-[#7e8ba0]">{chapter.name}</small></span><strong className="text-[#397cf4]">{chapter.words.length} 词</strong></div>
             </section>
           </div>
         </section>
@@ -379,9 +457,9 @@ export default function Home() {
 }
 
 function EmptyMistakes({ onStart }: { onStart: () => void }) {
-  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">✅</p><h2 className="mt-4 text-2xl font-black">本章错词本是空的</h2><p className="mt-2 text-[#7d899d]">答错的词会自动收录到这里。</p><button onClick={onStart} className="action-button action-primary mt-6">开始本章练习</button></div></div>;
+  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">✅</p><h2 className="mt-4 text-2xl font-black">本单元错词本是空的</h2><p className="mt-2 text-[#7d899d]">答错的词会自动收录到这里。</p><button onClick={onStart} className="action-button action-primary mt-6">开始本单元练习</button></div></div>;
 }
 
 function CompleteCard({ correct, total, remaining, onRestart, onMistakes }: { correct: number; total: number; remaining: number; onRestart: () => void; onMistakes: () => void }) {
-  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">🎉</p><h2 className="mt-4 text-3xl font-black">本轮完成</h2><p className="mt-2 text-[#718096]">答对 {correct} 个，共练习 {total} 个，本章剩余错词 {remaining} 个。</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRestart} className="action-button">再练一轮</button><button onClick={onMistakes} className="action-button action-primary">练习错词</button></div></div></div>;
+  return <div className="grid min-h-[410px] place-items-center text-center"><div><p className="text-5xl">🎉</p><h2 className="mt-4 text-3xl font-black">本轮完成</h2><p className="mt-2 text-[#718096]">答对 {correct} 个，共练习 {total} 个，本单元剩余错词 {remaining} 个。</p><div className="mt-6 flex justify-center gap-3"><button onClick={onRestart} className="action-button">再练一轮</button><button onClick={onMistakes} className="action-button action-primary">练习错词</button></div></div></div>;
 }
