@@ -13,7 +13,6 @@ type PromptMode = 'chinese' | 'audio';
 type BookId = 'ielts' | 'toefl';
 
 type BookConfig = {
-  title: string;
   chapters: BookChapter[];
   unitOption: (chapter: BookChapter) => string;
   unitTitle: (chapter: BookChapter) => string;
@@ -22,14 +21,12 @@ type BookConfig = {
 
 const BOOKS: Record<BookId, BookConfig> = {
   ielts: {
-    title: '雅思词汇真经',
     chapters: ieltsChapters,
     unitOption: (chapter) => `第${chapter.id}章 · ${chapter.name}`,
     unitTitle: (chapter) => `Chapter ${chapter.id}`,
     exampleLabel: '雅思词书例句',
   },
   toefl: {
-    title: '托福词汇',
     chapters: toeflChapters,
     unitOption: (chapter) => `List ${chapter.id} · ${chapter.name}`,
     unitTitle: (chapter) => `List ${chapter.id}`,
@@ -327,7 +324,7 @@ export default function Home() {
           <div className="mx-auto flex max-w-[1080px] flex-wrap items-center justify-between gap-3">
             <button onClick={() => chooseChapter(chapterId)} className="text-left" aria-label="返回当前单元练习">
               <p className="text-[10px] font-black tracking-[0.24em] text-[#397cf4]">VOCAB DICTATION</p>
-              <h1 className="mt-0.5 text-base font-black sm:text-lg">{activeBook.title} · 默写练习</h1>
+              <h1 className="mt-0.5 text-base font-black sm:text-lg">雅思 托福 词汇练习</h1>
             </button>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <select value={bookId} onChange={(event) => chooseBook(event.target.value as BookId)} aria-label="选择词书" className="h-10 rounded-full border border-[#bfd5fb] bg-[#f2f7ff] px-4 text-sm font-black text-[#286fd7] shadow-sm outline-none">
