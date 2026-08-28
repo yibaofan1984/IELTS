@@ -40,6 +40,7 @@ const sourceHintCorrections: Record<string, string> = {
   grain: '谷物；颗粒；a grain of 一点，些微；一粒',
   squeeze: '挤压；squeeze sth. out of/from sth. 从某物中榨出（或挤出）某物',
   snatch: '一把抓住；迅速夺取',
+  trail: '（使）拖在后面；跟踪；踪迹',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -47,6 +48,7 @@ const displayHintCorrections: Record<string, string> = {
   grain: '谷物；颗粒',
   squeeze: '挤压',
   snatch: '一把抓住；迅速夺取',
+  trail: '（使）拖在后面；跟踪；踪迹',
 };
 
 const partOfSpeechByWord = partOfSpeechData as Record<string, string>;
