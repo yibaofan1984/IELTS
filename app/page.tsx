@@ -99,6 +99,7 @@ export default function Home() {
   const [wordOrder, setWordOrder] = useState<WordOrder>('sequential');
   const [dictationCount, setDictationCount] = useState(1);
   const [showFirstLetter, setShowFirstLetter] = useState(false);
+  const [showLetterCount, setShowLetterCount] = useState(true);
   const [promptMode, setPromptMode] = useState<PromptMode>('chinese');
   const inputRef = useRef<HTMLInputElement>(null);
   const retryTimerRef = useRef<number | null>(null);
@@ -348,6 +349,7 @@ export default function Home() {
                 </select>
               </label>
               <button onClick={toggleFirstLetter} className={'toolbar-pill ' + (showFirstLetter ? 'toolbar-pill-active' : '')}>A 首字母</button>
+              <button onClick={() => setShowLetterCount((shown) => !shown)} aria-pressed={showLetterCount} title={showLetterCount ? '关闭单词字母个数提示' : '开启单词字母个数提示'} className={'toolbar-pill ' + (showLetterCount ? 'toolbar-pill-active' : '')}>🔢 字母数</button>
               <button onClick={openMistakes} className={`toolbar-pill ${mode === 'mistakes' ? 'toolbar-pill-active' : ''}`}>📕 错词 {chapterMistakes.size}</button>
             </div>
           </div>
@@ -399,19 +401,23 @@ export default function Home() {
               <p className="mt-2 text-xs font-semibold text-[#9aa6ba]">{activeBook.unitOption(chapter)}{currentRepeatTotal > 1 ? ` · 本词已正确 ${completedCorrectRepetitions}/${currentRepeatTotal} 遍` : ''}</p>
 
               <div className="mt-8 w-full max-w-[660px]">
-                <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
-                  <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
-                  {expectedCharacters.map((expectedCharacter, characterIndex) => {
-                    const typedCharacter = typedCharacters[characterIndex] ?? '';
-                    const isLetter = /[a-z]/i.test(expectedCharacter);
-                    if (!isLetter) {
-                      const separatorEntered = typedCharacter === expectedCharacter;
-                      return <span key={characterIndex} aria-label={expectedCharacter === ' ' ? (separatorEntered ? '已输入空格' : '这里输入空格') : '这里输入连字符，可按键盘减号键'} className={`pointer-events-none flex h-10 min-w-10 items-end justify-center pb-1 text-[10px] font-black ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : separatorEntered ? 'text-[#397cf4]' : characterIndex === typedCharacters.length ? 'text-[#397cf4]' : 'text-[#9aa6ba]'}`}>{typedCharacter ? (typedCharacter === ' ' ? '␣ 空格' : typedCharacter) : expectedCharacter === ' ' ? '空格' : '-'}</span>;
-                    }
-                    return <span key={characterIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black lowercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : characterIndex === typedCharacters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>{typedCharacter === ' ' ? '␣' : typedCharacter}</span>;
-                  })}
-                </div>
-                <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入 · {letterCount} 个字母{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
+                {showLetterCount ? (
+                  <div className="relative mx-auto flex min-h-14 flex-wrap justify-center gap-x-2 gap-y-3 rounded-xl p-2 focus-within:ring-2 focus-within:ring-[#8bb8ff]/35" aria-label={`${letterCount} 个字母`}>
+                    <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 read-only:cursor-default" placeholder="输入英文拼写" />
+                    {expectedCharacters.map((expectedCharacter, characterIndex) => {
+                      const typedCharacter = typedCharacters[characterIndex] ?? '';
+                      const isLetter = /[a-z]/i.test(expectedCharacter);
+                      if (!isLetter) {
+                        const separatorEntered = typedCharacter === expectedCharacter;
+                        return <span key={characterIndex} aria-label={expectedCharacter === ' ' ? (separatorEntered ? '已输入空格' : '这里输入空格') : '这里输入连字符，可按键盘减号键'} className={`pointer-events-none flex h-10 min-w-10 items-end justify-center pb-1 text-[10px] font-black ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : separatorEntered ? 'text-[#397cf4]' : characterIndex === typedCharacters.length ? 'text-[#397cf4]' : 'text-[#9aa6ba]'}`}>{typedCharacter ? (typedCharacter === ' ' ? '␣ 空格' : typedCharacter) : expectedCharacter === ' ' ? '空格' : '-'}</span>;
+                      }
+                      return <span key={characterIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black lowercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : characterIndex === typedCharacters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>{typedCharacter === ' ' ? '␣' : typedCharacter}</span>;
+                    })}
+                  </div>
+                ) : (
+                  <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="mx-auto block h-14 w-full rounded-xl border-2 border-[#cfe0ff] bg-white px-5 text-center text-xl font-black lowercase text-[#172033] outline-none transition focus:border-[#7eb0ff] focus:ring-4 focus:ring-[#8bb8ff]/20 read-only:cursor-default sm:text-2xl" placeholder="输入英文拼写" />
+                )}
+                <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入{showLetterCount ? ` · ${letterCount} 个字母` : ''}{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
               </div>
 
               {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本单元错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
