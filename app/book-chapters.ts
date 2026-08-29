@@ -58,6 +58,7 @@ const displayHintCorrections: Record<string, string> = {
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
+  '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
 };
