@@ -40,6 +40,7 @@ const corrections: Record<string, string> = {
 };
 
 const sourceHintCorrections: Record<string, string> = {
+  story: '故事；叙述；to cut a long story short 长话短说；简而言之',
   recruit: '招募；招聘；征募；n. 新成员；新兵',
   knot: '结；绳结；打结；cut the Gordian knot 快刀斩乱麻',
   kettle: '水壶；[美]锅；a different kettle of fish 截然不同的人；另一码事',
@@ -51,6 +52,7 @@ const sourceHintCorrections: Record<string, string> = {
 };
 
 const displayHintCorrections: Record<string, string> = {
+  story: '故事；叙述',
   recruit: '招募；招聘；征募；新成员；新兵',
   knot: '结；绳结；打结',
   kettle: '水壶；锅',
