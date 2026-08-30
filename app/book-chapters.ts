@@ -51,6 +51,10 @@ const sourceHintCorrections: Record<string, string> = {
   obsess: '（使）痴迷；（使）心神不宁；be obsessed by/with 被……迷住；对……着迷',
 };
 
+const sourceHintCorrectionsBySourceId: Record<string, string> = {
+  '5-14-14-dividend': '被除数',
+};
+
 const displayHintCorrections: Record<string, string> = {
   story: '故事；叙述',
   recruit: '招募；招聘；征募；新成员；新兵',
@@ -64,6 +68,7 @@ const displayHintCorrections: Record<string, string> = {
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
+  '5-14-14-dividend': '被除数',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
@@ -89,8 +94,8 @@ function chineseHint(hint: string) {
 
 const stream = (sourceData as BookChapter[]).flatMap((chapter) => chapter.words.map((word) => {
   const correctedWord = corrections[word.word] ?? word.word;
-  const sourceHint = sourceHintCorrections[correctedWord] ?? word.hint;
   const sourceId = String(word.chapter) + '-' + word.list + '-' + word.number + '-' + word.word;
+  const sourceHint = sourceHintCorrectionsBySourceId[sourceId] ?? sourceHintCorrections[correctedWord] ?? word.hint;
   return {
     ...word,
     bookId: 'ielts' as const,
