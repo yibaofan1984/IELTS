@@ -7,6 +7,19 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 ::selection { background: #f0a06f; color: #173c35; }
 
+.plain-word-input {
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 2rem;
+}
+
+@media (min-width: 640px) {
+  .plain-word-input {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+}
+
 .word-position-slider {
   appearance: none;
   -webkit-appearance: none;
