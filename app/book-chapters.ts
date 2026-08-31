@@ -53,6 +53,7 @@ const sourceHintCorrections: Record<string, string> = {
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '5-14-14-dividend': '被除数',
+  '5-15-39-curriculum': '课程；（学校等的）全部课程',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -69,6 +70,7 @@ const displayHintCorrections: Record<string, string> = {
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
   '5-14-14-dividend': '被除数',
+  '5-15-39-curriculum': '课程；（学校等的）全部课程',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
