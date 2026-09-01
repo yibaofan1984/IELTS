@@ -52,6 +52,7 @@ const sourceHintCorrections: Record<string, string> = {
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
+  '5-11-53-all-round': '全面的；多才多艺的',
   '5-14-14-dividend': '被除数',
   '5-15-39-curriculum': '课程；（学校等的）全部课程',
   '5-16-52-understand': '懂得；理解',
@@ -72,6 +73,7 @@ const displayHintCorrections: Record<string, string> = {
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
+  '5-11-53-all-round': '全面的；多才多艺的',
   '5-14-14-dividend': '被除数',
   '5-15-39-curriculum': '课程；（学校等的）全部课程',
   '5-16-52-understand': '懂得；理解',
