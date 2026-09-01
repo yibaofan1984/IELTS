@@ -37,8 +37,8 @@ const BOOKS: Record<BookId, BookConfig> = {
 const STORAGE_KEY = 'ielts-dictation-mistakes-v2';
 const LEGACY_STORAGE_KEY = 'ielts-dictation-mistakes-v1';
 const wordId = (word: Word) => word.sourceId ?? (word.chapter + '-' + word.list + '-' + word.number + '-' + word.word);
-const standardizeAnswer = (value: string) => value.toLowerCase().replace(/[‐‑‒–—―−－﹘﹣_＿]/g, '-');
-const normalize = (value: string) => standardizeAnswer(value).trim().replace(/[’]/g, "'").replace(/\s+/g, ' ');
+const standardizeAnswer = (value: string) => value.replace(/[‐‑‒–—―−－﹘﹣_＿]/g, '-');
+const normalize = (value: string) => standardizeAnswer(value).toLowerCase().trim().replace(/[’]/g, "'").replace(/\s+/g, ' ');
 const repetitionTarget = (errorCount: number) => Math.min(6, Math.max(2, errorCount + 1));
 function shuffled<T>(items: T[]) {
   const copy = [...items];
@@ -112,8 +112,8 @@ export default function Home() {
   const chapterMistakes = useMemo(() => new Set([...chapterWordIds].filter((id) => mistakeCounts[id] > 0)), [chapterWordIds, mistakeCounts]);
   const mistakeWords = useMemo(() => chapter.words.filter((word) => chapterMistakes.has(wordId(word))), [chapter, chapterMistakes]);
   const letterCount = current?.word.match(/[a-z]/gi)?.length ?? 0;
-  const expectedCharacters = Array.from(current?.word.toLowerCase() ?? '');
-  const typedCharacters = Array.from(answer.toLowerCase());
+  const expectedCharacters = Array.from(current?.word ?? '');
+  const typedCharacters = Array.from(answer);
   const currentErrorCount = current ? mistakeCounts[wordId(current)] ?? 0 : 0;
   const generatedExample = current && !current.example ? createNaturalExample(current) : null;
   const exampleSentence = current?.example
@@ -142,7 +142,7 @@ export default function Home() {
   const currentRepeatPosition = current ? index - repeatStart + 1 : 0;
   const currentRepeatTotal = current ? repeatEnd - repeatStart + 1 : 0;
   const completedCorrectRepetitions = current ? currentRepeatPosition - (result === 'correct' ? 0 : 1) : 0;
-  const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0].toLowerCase() : '';
+  const initialAnswerFor = (word?: Word) => showFirstLetter && word && /^[a-z]/i.test(word.word) ? word.word[0] : '';
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -217,7 +217,7 @@ export default function Home() {
   const toggleFirstLetter = () => {
     const next = !showFirstLetter;
     setShowFirstLetter(next);
-    setAnswer(next && current && /^[a-z]/i.test(current.word) ? current.word[0].toLowerCase() : '');
+    setAnswer(next && current && /^[a-z]/i.test(current.word) ? current.word[0] : '');
     setResult(null);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
@@ -411,11 +411,11 @@ export default function Home() {
                         const separatorEntered = typedCharacter === expectedCharacter;
                         return <span key={characterIndex} aria-label={expectedCharacter === ' ' ? (separatorEntered ? '已输入空格' : '这里输入空格') : '这里输入连字符，可按键盘减号键'} className={`pointer-events-none flex h-10 min-w-10 items-end justify-center pb-1 text-[10px] font-black ${result === 'correct' ? 'text-[#25a76b]' : result === 'wrong' ? 'text-[#df4f65]' : separatorEntered ? 'text-[#397cf4]' : characterIndex === typedCharacters.length ? 'text-[#397cf4]' : 'text-[#9aa6ba]'}`}>{typedCharacter ? (typedCharacter === ' ' ? '␣ 空格' : typedCharacter) : expectedCharacter === ' ' ? '空格' : '-'}</span>;
                       }
-                      return <span key={characterIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black lowercase sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : characterIndex === typedCharacters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>{typedCharacter === ' ' ? '␣' : typedCharacter}</span>;
+                      return <span key={characterIndex} className={`pointer-events-none flex h-10 w-8 items-end justify-center border-b-[3px] pb-1 text-xl font-black sm:text-2xl ${result === 'correct' ? 'border-[#64cd9b] text-[#25a76b]' : result === 'wrong' ? 'border-[#f08b99] text-[#df4f65]' : characterIndex === typedCharacters.length ? 'border-[#7eb0ff] text-[#172033]' : 'border-[#ccd5e3] text-[#172033]'}`}>{typedCharacter === ' ' ? '␣' : typedCharacter}</span>;
                     })}
                   </div>
                 ) : (
-                  <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="plain-word-input mx-auto block h-14 w-full rounded-xl border-2 border-[#cfe0ff] bg-white px-5 text-center lowercase text-[#172033] outline-none transition focus:border-[#7eb0ff] focus:ring-4 focus:ring-[#8bb8ff]/20 read-only:cursor-default" placeholder="输入英文拼写" />
+                  <input ref={inputRef} value={answer} onChange={(event) => { if (!result) setAnswer(standardizeAnswer(event.target.value)); }} onKeyDown={(event) => { if (event.key !== 'Enter') return; if (result === 'wrong') retryCurrent(); else if (result === 'correct') nextWord(); else checkAnswer(); }} readOnly={Boolean(result)} autoFocus autoCapitalize="none" autoComplete="off" spellCheck={false} aria-label="输入英文单词" className="plain-word-input mx-auto block h-14 w-full rounded-xl border-2 border-[#cfe0ff] bg-white px-5 text-center text-[#172033] outline-none transition focus:border-[#7eb0ff] focus:ring-4 focus:ring-[#8bb8ff]/20 read-only:cursor-default" placeholder="输入英文拼写" />
                 )}
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入{showLetterCount ? ` · ${letterCount} 个字母` : ''}{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
               </div>
