@@ -92,7 +92,7 @@ export default function Home() {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
   const [result, setResult] = useState<Result>(null);
-  const [hadWrongAttempt, setHadWrongAttempt] = useState(false);
+  const [wrongAttemptsThisBlock, setWrongAttemptsThisBlock] = useState(0);
   const [mistakeCounts, setMistakeCounts] = useState<MistakeCounts>({});
   const [correctCount, setCorrectCount] = useState(0);
   const [ready, setReady] = useState(false);
@@ -178,7 +178,7 @@ export default function Home() {
   const resetRound = (words: Word[], nextMode: 'chapter' | 'mistakes') => {
     if (retryTimerRef.current) window.clearTimeout(retryTimerRef.current);
     setQueue(words); setMode(nextMode); setIndex(0); setAnswer(initialAnswerFor(words[0])); setResult(null);
-    setHadWrongAttempt(false);
+    setWrongAttemptsThisBlock(0);
     setCorrectCount(0);
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
@@ -272,12 +272,12 @@ export default function Home() {
       setCorrectCount((count) => count + 1);
       const nextIsSameMistake = mode === 'mistakes' && queue[index + 1] && wordId(queue[index + 1]) === id;
       if (mode === 'mistakes') {
-        if (!nextIsSameMistake) removeMistake(current);
-      } else if (!hadWrongAttempt) {
+        if (!nextIsSameMistake && wrongAttemptsThisBlock < 2) removeMistake(current);
+      } else if (wrongAttemptsThisBlock === 0) {
         removeMistake(current);
       }
     } else {
-      setHadWrongAttempt(true);
+      setWrongAttemptsThisBlock((count) => count + 1);
       const nextErrorCount = currentErrorCount + 1;
       setMistakeCounts((counts) => ({ ...counts, [id]: (counts[id] ?? 0) + 1 }));
       if (mode === 'mistakes') {
@@ -298,7 +298,7 @@ export default function Home() {
     const next = queue[index + 1];
     const staysOnSameWord = Boolean(current && next && wordId(current) === wordId(next));
     setIndex((value) => value + 1); setAnswer(initialAnswerFor(next)); setResult(null);
-    if (!staysOnSameWord) setHadWrongAttempt(false);
+    if (!staysOnSameWord) setWrongAttemptsThisBlock(0);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -312,7 +312,7 @@ export default function Home() {
     setIndex(nextIndex);
     setAnswer(initialAnswerFor(queue[nextIndex]));
     setResult(null);
-    setHadWrongAttempt(false);
+    setWrongAttemptsThisBlock(0);
     window.setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -420,7 +420,7 @@ export default function Home() {
                 <p className="mx-auto mt-5 max-w-[560px] rounded-full bg-[#eef5ff] px-4 py-2 text-xs font-semibold text-[#52627a]">严格按原拼写输入{showLetterCount ? ` · ${letterCount} 个字母` : ''}{current.word.includes(' ') ? ' · 含空格' : ''}{current.word.includes('-') ? ' · 横线按减号键 -（下划线也可）' : ''}</p>
               </div>
 
-              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本单元错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && hadWrongAttempt && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}</div>}
+              {result && <div role="status" className={`mt-5 rounded-2xl px-6 py-3 ${result === 'correct' ? 'bg-[#e6f7ee] text-[#238657]' : 'bg-[#ffeaed] text-[#b9394c]'}`}><strong>{result === 'correct' ? '拼写正确！' : `已加入本单元错词本 · 累计错 ${currentErrorCount} 次`}</strong>{result === 'wrong' && <span className="ml-2">正确答案：<b>{current.word}</b> · 本次不计数，即将自动重新拼写</span>}{result === 'correct' && queue[index + 1] && wordId(queue[index + 1]) === wordId(current) && <span className="ml-2">已正确 {completedCorrectRepetitions}/{currentRepeatTotal} 遍，还需 {repeatEnd - index} 遍</span>}{result === 'correct' && mode === 'chapter' && wrongAttemptsThisBlock > 0 && <span className="ml-2">本组曾拼错，该词会保留在错词本</span>}{result === 'correct' && mode === 'mistakes' && wrongAttemptsThisBlock >= 2 && <span className="ml-2">本轮已拼错 {wrongAttemptsThisBlock} 次，该词会继续保留在错词本</span>}</div>}
 
               {result === 'correct' && relatedWords.length > 0 && (
                 <section aria-label="相关常用词" className="mt-4 w-full max-w-[720px] rounded-2xl border border-[#dce8fb] bg-white px-5 py-4 text-left shadow-[0_8px_24px_rgb(65_90_130/7%)]">
@@ -454,7 +454,7 @@ export default function Home() {
                 {mistakeWords.length ? mistakeWords.slice(0, 14).map((word) => { const errors = mistakeCounts[wordId(word)] ?? 1; return <span key={wordId(word)} className="inline-flex items-center gap-1.5 rounded-full border border-[#f2b7c0] bg-[#fff5f6] px-3 py-1.5 text-xs"><b>{word.word}</b><span className="text-[#c34d60]">错 {errors} 次 · 连写 {repetitionTarget(errors)} 次</span><button onClick={() => removeMistake(word)} className="text-[#a85c68]" aria-label={`移除 ${word.word}`}>×</button></span>; }) : <p className="text-sm text-[#98a4b7]">暂无错词，继续保持。</p>}
                 {mistakeWords.length > 14 && <span className="rounded-full bg-[#f1f4f8] px-3 py-1.5 text-xs font-bold text-[#69758a]">还有 {mistakeWords.length - 14} 个</span>}
               </div>
-              {mistakeWords.length > 0 && <p className="mt-3 text-[11px] font-semibold text-[#98a4b7]">错误次数越多，错词复习时需要连续正确拼写的次数越多（最多 6 次）。</p>}
+              {mistakeWords.length > 0 && <p className="mt-3 text-[11px] font-semibold text-[#98a4b7]">错误次数越多，错词复习时需要连续正确拼写的次数越多（最多 6 次）；复习中同一词拼错 2 次会继续保留在错词本。</p>}
             </section>
             <section className="rounded-2xl border border-[#ebeff5] bg-white p-4 shadow-[0_7px_24px_rgb(60_75_105/5%)]">
               <h3 className="font-black">📚 当前单元</h3>
