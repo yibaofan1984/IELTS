@@ -60,6 +60,7 @@ const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '5-17-1-contrast': '对比；明显的差异',
   '5-17-27-achieve': '实现；达到；取得（成功或成就）',
   '5-17-37-grant': '授予；准予；承认',
+  '6-18-29-apply': '应用；适用',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -83,6 +84,7 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
   '5-17-1-contrast': '对比；明显的差异',
   '5-17-27-achieve': '实现；达到；取得（成功或成就）',
   '5-17-37-grant': '授予；准予；承认',
+  '6-18-29-apply': '应用；适用',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
