@@ -66,6 +66,7 @@ const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '6-18-53-belong': '属于；应在（某处）；适合；belong to 属于',
   '6-19-18-vision': '视觉；视力；visual adj. 视觉的；视力的；visible adj. 看得见的',
   '6-19-23-gear': '齿轮；传动装置；使适合；in high gear 以高速挡；高速地',
+  '6-19-32-simplify': '简化；精简；simplicity n. 简单；质朴；simple adj. 简单的；simply adv. 简单地；仅仅',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -95,12 +96,14 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
   '6-18-53-belong': '属于；应在（某处）；适合',
   '6-19-18-vision': '视觉；视力',
   '6-19-23-gear': '齿轮；传动装置；使适合',
+  '6-19-32-simplify': '简化；精简',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
 };
 
 const partOfSpeechCorrectionsBySourceId: Record<string, string> = {
+  '6-19-32-simplify': 'v.',
   '20-53-47-range': 'v.',
 };
 
