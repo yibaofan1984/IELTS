@@ -73,6 +73,7 @@ const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '9-23-49-lyric': '歌词；抒情诗；抒情的；lyrics n. 歌词',
   '9-24-50-jump': '跳跃；跳过；暴涨；from the jump 从一开始',
   '9-25-4-pace': '步速；节奏；步伐；踱步；set the pace 确立标准；领先',
+  '9-25-8-cruise': '乘船游览；以平稳的速度行驶；cruiser n. 巡洋舰',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -109,6 +110,7 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
   '9-23-49-lyric': '歌词；抒情诗；抒情的',
   '9-24-50-jump': '跳跃；跳过；暴涨',
   '9-25-4-pace': '步速；节奏；步伐；踱步',
+  '9-25-8-cruise': '乘船游览；以平稳的速度行驶',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
