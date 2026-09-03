@@ -70,6 +70,7 @@ const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '6-19-34-filter': '过滤；（光或声音）透过；过滤器；filter through 消息等慢慢传开；走漏',
   '7-20-17-local': '当地的；本地的；当地人；localise v. 使局部化；localize v. 使局部化',
   '9-23-30-role': '角色；作用；职能',
+  '9-23-49-lyric': '歌词；抒情诗；抒情的；lyrics n. 歌词',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -103,6 +104,7 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
   '6-19-34-filter': '过滤；（光或声音）透过；过滤器',
   '7-20-17-local': '当地的；本地的；当地人',
   '9-23-30-role': '角色；作用；职能',
+  '9-23-49-lyric': '歌词；抒情诗；抒情的',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
