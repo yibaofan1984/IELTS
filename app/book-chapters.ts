@@ -75,6 +75,7 @@ const sourceHintCorrectionsBySourceId: Record<string, string> = {
   '9-25-4-pace': '步速；节奏；步伐；踱步；set the pace 确立标准；领先',
   '9-25-8-cruise': '乘船游览；以平稳的速度行驶；cruiser n. 巡洋舰',
   '9-25-10-vocation': '职业；使命感；vacation n. 休假；假期',
+  '11-28-34-cosplay': '角色扮演；装扮成角色；costume play 角色扮演',
 };
 
 const displayHintCorrections: Record<string, string> = {
@@ -113,6 +114,7 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
   '9-25-4-pace': '步速；节奏；步伐；踱步',
   '9-25-8-cruise': '乘船游览；以平稳的速度行驶',
   '9-25-10-vocation': '职业；使命感',
+  '11-28-34-cosplay': '角色扮演；装扮成角色',
   '20-52-18-reel': '眩晕；混乱；卷轴',
   '20-53-47-range': '（在一定范围内）变化；变动',
   '20-54-32-saturate': '使饱和；浸透；使充满',
@@ -120,6 +122,7 @@ const displayHintCorrectionsBySourceId: Record<string, string> = {
 
 const partOfSpeechCorrectionsBySourceId: Record<string, string> = {
   '6-19-32-simplify': 'v.',
+  '11-28-34-cosplay': 'n. / v.',
   '20-53-47-range': 'v.',
 };
 
