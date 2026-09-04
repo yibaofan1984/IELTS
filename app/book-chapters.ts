@@ -227,6 +227,346 @@ function correctedChapter15Words(words: BookWord[]) {
   });
 }
 
+// The old import mixed printed headwords with derivations, example phrases and
+// memory notes. These chapter-specific exclusions were checked against the
+// headword footers in the printed book.
+const excludedHeadwordsByChapter: Record<number, Set<string>> = Object.fromEntries(
+  Object.entries({
+    1: ['equal'],
+    2: ['undermine', 'extinction', 'pattern', 'outcome', 'impact', 'seasonal', 'experimental', 'favourable', 'productive', 'efficient', 'effective', 'considerable', 'massive', 'immense', 'maximal', 'minimal', 'optimal'],
+    3: ['instinct', 'intuition', 'captivate', 'defend', 'existence', 'tame nature', 'sheepdog', 'hybridize'],
+    5: ['academic', 'intelligible', 'intellectual', 'appreciate', 'feedback', 'underestimate', 'overestimate', 'apply', 'fellowship', 'scholarship', 'reward', 'award', 'prize'],
+    6: ['pinpoint', 'accurate', 'precise', 'correct', 'error', 'flaw', 'fault', 'stumble', 'contingency', 'circumstance', 'culture', 'civilisation', 'renaissance', 'epic'],
+    7: ['language', 'symbol', 'assign', 'gesture', 'handwriting'],
+    8: ['diction', 'communicate', 'discussion', 'brainstorm', 'debate', 'debatable', 'commentary', 'comment', 'negotiate', 'negotiation', 'contention', 'content'],
+    9: ['publication', 'participate', 'expectation', 'entertainment', 'simulative', 'dramatic', 'concertmaster', 'artistic', 'craft', 'rhythmical', 'compete', 'sponsorship', 'athletics', 'fame', 'cyclist', 'bicycle', 'plunge whole-heartedly', 'footstep', 'jogger', 'limb', 'pull', 'drag', 'bend', 'bend over backwards to do sth', 'bow', 'take a bow', 'photographic', 'programmer', 'musicale', 'vocation'],
+    10: ['artificial', 'raw material', 'necessary', 'pipeline', 'booklet', 'leaflet', 'brochure', 'opaque', 'cementer', 'stationer', 'refrigeration'],
+    11: ['fashionable', 'stylish', 'tend', 'prevalence', 'prevailing', 'luxurious', 'cosplay', 'indecent', 'graceful', 'elegant', 'perfection', 'clothing', 'unbutton', 'woollen', 'patchwork', 'whitewash', 'stainless', 'curvy', 'hourglass', 'slightly', 'slim', 'thready', 'stringy'],
+    12: ['dietary', 'treatment', 'drinkable', 'chief', 'spoonful', 'alcoholic beverage', 'alcoholic', 'cigar', 'strawberry', 'blueberry', 'lemonade', 'popcorn', 'beefy', 'an odd fish', 'diary', 'boiling', 'creamy', 'salty', 'sweeten', 'acidic', 'hungry', 'soy sauce', 'digestion', 'cooker', 'baker', 'bakery', 'toaster', 'slice', 'dice', 'shred', 'chop', 'deep-fry', 'steam', 'shell', 'beat', 'toss', 'mash'],
+    13: ['architect', 'erect', 'structural', 'constructive', 'obstacle', 'established', 'founder', 'concretely', 'residential', 'immigrate', 'settlement', 'lift', 'columnist', 'laser', 'vaulted', 'arched', 'lobbyist', 'radiate', 'bathe', 'reservoir', 'urbanise', 'urbanisation', 'periphery', 'expansion', 'brick', 'maltreat', 'maintenance', 'modification', 'span of life', 'installation', 'furniture', 'emigrate', 'assembly'],
+    14: ['navigation', 'attractive', 'commemorate', 'monumental', 'pharaoh', 'traffic regulations', 'a traffic jam', 'traffic congestion', 'aeroplane', 'freighter', 'convention', 'pavement', 'recycle', 'cyclist', 'stewardess', 'hazardous', 'bow', 'overdue', 'post', 'pack', 'unload', 'transition', 'vehicles', 'appear'],
+    16: ['economics', 'industrialise', 'commercialise', 'affordable', 'retailing', 'dutiable', 'depress', 'declination', 'gradual', 'redundancy', 'accompany', 'entrepreneur', 'investor', 'productive', 'rely', 'stockbroker', 'possessive', 'accountable', 'improvement'],
+    17: ['anonymous', 'falsehood', 'genuine', 'routine', 'consequence', 'demand', 'request', 'require', 'petition', 'command', 'instruct', 'false', 'procedure'],
+    18: ['explode', 'occasionally', 'spy', 'scout', 'general', 'soldier', 'veteran'],
+    19: ['relate'],
+    20: ['activity', 'behaviour', 'reaction', 'response', 'complain', 'ironic', 'prejudice', 'terrifying', 'accordance', 'substitute', 'distinguish', 'differentiate', 'incline', 'lean', 'sideways'],
+    21: ['organic', 'immunise', 'snore', 'pregnant', 'infect', 'fluent', 'traumatic', 'immortal', 'prescribe', 'serious', 'stem', 'confident', 'sympathy', 'temperateness', 'neutral', 'explicit', 'irritant', 'anxious', 'reluctance', 'confusion', 'impulse', 'rigid', 'stubborn', 'stereotype'],
+    22: ['latter', 'precedes', 'punctual', 'duration', 'consecutive', 'periodically', 'period', 'imminent', 'incidentally'],
+  }).map(([chapter, words]) => [Number(chapter), new Set(words)]),
+) as Record<number, Set<string>>;
+
+type SupplementalHeadword = {
+  word: string;
+  hint: string;
+  before?: string;
+  sourceId?: string;
+};
+
+function supplemental(word: string, hint: string, before?: string, sourceId?: string): SupplementalHeadword {
+  return { word, hint, before, sourceId };
+}
+
+const supplementalHeadwordsByChapter: Record<number, SupplementalHeadword[]> = {
+  1: [
+    supplemental('gasoline', '汽油', 'petrol'),
+  ],
+  3: [
+    supplemental('hybridise', '杂交；使杂交', 'breed'),
+    supplemental('protein', '蛋白质', 'intuitive'),
+    supplemental('instinctive', '本能的；直觉的', 'intuitive'),
+  ],
+  4: [
+    supplemental('signal', '信号；发信号', 'refraction'),
+    supplemental('desperate', '绝望的；不顾一切的', 'hopeless'),
+  ],
+  5: [
+    supplemental('problem', '问题；难题', 'issue'),
+    supplemental('motive', '动机；目的', 'motivate'),
+    supplemental('clever', '聪明的；灵巧的', 'all-round'),
+    supplemental('smart', '聪明的；时髦的', 'all-round'),
+    supplemental('scientist', '科学家', 'mentor'),
+    supplemental('doctor', '博士；医生', 'fresher'),
+  ],
+  7: [
+    supplemental('culture', '文化；文明', 'ideology', '7-20-1-culture'),
+    supplemental('civilisation', '文明；文明社会', 'ideology', '7-20-2-civilisation'),
+    supplemental('renaissance', '文艺复兴；复兴', 'ideology', '7-20-3-renaissance'),
+    supplemental('epic', '史诗；史诗般的', 'ideology', '7-20-4-epic'),
+    supplemental('homesick', '思乡的；想家的', 'celebrity'),
+  ],
+  8: [
+    supplemental('language', '语言', 'pictograph', '8-21-19-language'),
+    supplemental('symbol', '符号；象征', 'pictograph', '8-21-20-symbol'),
+    supplemental('sign', '标志；迹象；签名', 'pictograph'),
+    supplemental('gesture', '手势；姿态', 'pictograph', '8-21-22-gesture'),
+    supplemental('handwriting', '笔迹；书法', 'pictograph', '8-21-23-handwriting'),
+    supplemental('dictionary', '词典；字典', 'idiom'),
+  ],
+  9: [
+    supplemental('festival', '节日；庆典', 'feast'),
+    supplemental('magic', '魔术；魔力；神奇的', 'drama'),
+    supplemental('film', '电影；胶片；拍摄', 'X-rated'),
+    supplemental('movie', '电影', 'X-rated'),
+    supplemental('artist', '艺术家', 'X-rated'),
+    supplemental('painter', '画家；油漆工', 'role'),
+    supplemental('classical', '古典的；经典的', 'lyric'),
+    supplemental('jazz', '爵士乐', 'lyric'),
+    supplemental('rock', '摇滚乐；岩石', 'lyric'),
+    supplemental('hip-hop', '嘻哈音乐；嘻哈文化', 'lyric'),
+    supplemental('pop', '流行音乐；流行的', 'lyric'),
+    supplemental('band', '乐队；带；箍', 'rhythm'),
+    supplemental('melody', '旋律；曲调', 'rhythm'),
+    supplemental('piano', '钢琴', 'violin'),
+    supplemental('guitar', '吉他', 'harmonica'),
+    supplemental('drum', '鼓；击鼓', 'flute'),
+    supplemental('Olympic', '奥林匹克运动会的', 'sponsor'),
+    supplemental('cricket', '板球；蟋蟀', 'kick'),
+    supplemental('goal', '目标；球门；进球', 'kick'),
+    supplemental('bat', '球棒；蝙蝠', 'kick'),
+    supplemental('racket', '球拍；喧闹声', 'kick'),
+    supplemental('vacation', '假期；休假', 'hike'),
+    supplemental('climb', '攀登；爬升'),
+  ],
+  10: [
+    supplemental('umbrella', '雨伞', 'raincoat'),
+    supplemental('fuel', '燃料；给……加燃料', 'lubricate'),
+    supplemental('fake', '假的；伪造；赝品', 'fragile'),
+  ],
+  11: [
+    supplemental('perfect', '完美的；使完善', 'appearance'),
+    supplemental('makeup', '化妆品；构成', 'handsome'),
+    supplemental('pretty', '漂亮的；相当', 'uniform'),
+    supplemental('beautiful', '美丽的', 'uniform'),
+    supplemental('ugly', '丑陋的；难看的', 'uniform'),
+    supplemental('dress', '连衣裙；穿衣', 'uniform'),
+    supplemental('clothe', '给……穿衣；覆盖', 'uniform'),
+    supplemental('hat', '帽子', 'brim'),
+    supplemental('cap', '帽子；盖', 'brim'),
+    supplemental('colour', '颜色；给……着色', 'brown'),
+    supplemental('white', '白色；白色的', 'brown'),
+    supplemental('yellow', '黄色；黄色的', 'purple'),
+    supplemental('grey', '灰色；灰色的', 'purple'),
+    supplemental('pink', '粉红色；粉红色的', 'purple'),
+    supplemental('tan', '棕褐色；晒黑', 'stain'),
+    supplemental('fade', '褪色；逐渐消失', 'stain'),
+  ],
+  12: [
+    supplemental('bar', '酒吧；条；障碍', 'cafeteria'),
+    supplemental('restaurant', '餐馆；饭店', 'refectory'),
+    supplemental('tray', '托盘', 'fork'),
+    supplemental('knife', '刀', 'spoon'),
+    supplemental('glass', '玻璃；玻璃杯', 'mug'),
+    supplemental('juice', '果汁；汁液', 'alcohol'),
+    supplemental('soda', '苏打水；汽水', 'alcohol'),
+    supplemental('coffee', '咖啡', 'alcohol'),
+    supplemental('drunk', '喝醉的；醉汉', 'tobacco'),
+    supplemental('vegetable', '蔬菜', 'cabbage'),
+    supplemental('tomato', '西红柿', 'cabbage'),
+    supplemental('potato', '土豆；马铃薯', 'cabbage'),
+    supplemental('fruit', '水果；果实', 'peel'),
+    supplemental('peach', '桃；桃子', 'plum'),
+    supplemental('pear', '梨', 'plum'),
+    supplemental('orange', '橙子；橙色', 'melon'),
+    supplemental('chicken', '鸡；鸡肉', 'turkey'),
+    supplemental('fish', '鱼；钓鱼', 'pond'),
+    supplemental('hamburger', '汉堡包', 'loaf'),
+    supplemental('pie', '馅饼', 'pasta'),
+    supplemental('pizza', '比萨饼', 'pasta'),
+    supplemental('spaghetti', '意大利面', 'pudding'),
+    supplemental('soup', '汤', 'pudding'),
+    supplemental('nut', '坚果', 'vanilla'),
+    supplemental('chocolate', '巧克力', 'vanilla'),
+    supplemental('ice cream', '冰淇淋', 'vanilla'),
+    supplemental('salt', '盐', 'flavour'),
+    supplemental('candy', '糖果', 'flavour'),
+    supplemental('sugar', '糖', 'flavour'),
+    supplemental('honey', '蜂蜜', 'flavour'),
+    supplemental('sweet', '甜的；甜食', 'bitter'),
+    supplemental('yummy', '美味的', 'tasty'),
+  ],
+  13: [
+    supplemental('hostel', '旅舍；招待所', 'lodge'),
+    supplemental('kitchen', '厨房', 'lavatory'),
+    supplemental('mall', '商场', 'complex'),
+    supplemental('supermarket', '超市', 'booth'),
+    supplemental('mason', '石匠；泥瓦匠', 'tile'),
+    supplemental('infrastructure', '基础设施', 'crane'),
+    supplemental('apparatus', '设备；器械', 'crane'),
+  ],
+  14: [
+    supplemental('visa', '签证', 'helicopter'),
+    supplemental('traffic', '交通；来往车辆', 'helicopter'),
+    supplemental('airline', '航空公司；航线', 'helicopter'),
+    supplemental('airplane', '飞机', 'helicopter'),
+    supplemental('flight', '飞行；航班', 'pilot'),
+    supplemental('cross', '穿过；十字形', 'path'),
+    supplemental('way', '道路；方法', 'path'),
+    supplemental('highway', '公路；干道', 'curb'),
+    supplemental('captain', '船长；队长', 'steward'),
+    supplemental('channel', '海峡；频道；渠道', 'canal'),
+    supplemental('mail', '邮件；邮寄', 'packet'),
+  ],
+  16: [
+    supplemental('saving', '节省；储蓄', 'redundant'),
+    supplemental('cash', '现金', 'coin'),
+    supplemental('interest', '兴趣；利息', 'dividend'),
+    supplemental('fire', '解雇；火；开火', 'lay-off'),
+    supplemental('loss', '损失；丧失', 'opportunity'),
+    supplemental('develop', '发展；开发', 'sustainable'),
+    supplemental('improve', '改善；提高', 'manage'),
+  ],
+  17: [
+    supplemental('fool', '傻瓜；愚弄', 'stigma'),
+  ],
+  18: [
+    supplemental('bomb', '炸弹；轰炸', 'blast'),
+    supplemental('glow', '发光；光辉', 'sword'),
+    supplemental('blade', '刀刃；叶片', 'sword'),
+    supplemental('hit', '击打；命中', 'beat'),
+    supplemental('deter', '阻止；威慑', 'forbid'),
+    supplemental('treason', '叛国罪；背叛', 'traitor'),
+    supplemental('rebel', '反叛者；反抗', 'traitor'),
+    supplemental('terrible', '可怕的；糟糕的', 'terrific'),
+    supplemental('warn', '警告；提醒', 'force'),
+    supplemental('might', '力量；可能', 'force'),
+  ],
+  19: [
+    supplemental('sex', '性别；性', 'female'),
+    supplemental('husband', '丈夫', 'grandfather'),
+    supplemental('gay', '同性恋的；同性恋者', 'grandfather'),
+    supplemental('twin', '双胞胎之一；成对的', 'embryo'),
+    supplemental('teenager', '青少年', 'adolescence'),
+    supplemental('dear', '亲爱的；昂贵的', 'beloved'),
+    supplemental('darling', '亲爱的；心爱的人', 'beloved'),
+    supplemental('lover', '爱人；情人；爱好者', 'beloved'),
+    supplemental('madam', '女士；夫人', 'hostess'),
+    supplemental('housewife', '家庭主妇', 'widow'),
+    supplemental('household', '家庭；一家人', 'chore'),
+    supplemental('guest', '客人；宾客', 'customer'),
+    supplemental('miss', '错过；未击中；小姐', 'appointment'),
+    supplemental('wedding', '婚礼', 'divorce'),
+    supplemental('honeymoon', '蜜月', 'divorce'),
+    supplemental('kiss', '亲吻；吻', 'divorce'),
+    supplemental('single', '单身的；单一的', 'sole'),
+    supplemental('each', '每个；各自', 'individual'),
+    supplemental('boss', '老板；上司', 'manager'),
+    supplemental('friendship', '友谊', 'affection'),
+    supplemental('stranger', '陌生人', 'apprentice'),
+    supplemental('deputy', '副手；代理人', 'hero'),
+    supplemental('actress', '女演员', 'chancellor'),
+    supplemental('fireman', '消防员', 'nurse'),
+    supplemental('fisherman', '渔民；钓鱼者', 'butcher'),
+  ],
+  20: [
+    supplemental('explain', '解释；说明', 'quarrel'),
+    supplemental('argument', '争论；论点', 'mention'),
+    supplemental('hug', '拥抱', 'tap'),
+    supplemental('follow', '跟随；遵循', 'mess'),
+    supplemental('grip', '紧握；控制', 'mess'),
+    supplemental('loosen', '松开；放宽', 'smash'),
+    supplemental('wish', '希望；愿望', 'aspire'),
+    supplemental('clear', '清除；清晰的', 'erase'),
+    supplemental('offer', '提供；提议', 'enlarge'),
+    supplemental('reader', '读者；读本', 'enlarge'),
+    supplemental('welcome', '欢迎；受欢迎的', 'greet'),
+  ],
+  21: [
+    supplemental('mouth', '嘴；口', 'tongue'),
+    supplemental('muscle', '肌肉；力量', 'pore'),
+    supplemental('quiet', '安静的；使安静', 'asleep'),
+    supplemental('overweight', '超重的', 'hypertension'),
+    supplemental('death', '死亡', 'mortal'),
+    supplemental('hospital', '医院', 'therapy'),
+    supplemental('check', '检查；核对', 'prescription'),
+    supplemental('relax', '放松', 'normal'),
+    supplemental('happiness', '幸福；快乐', 'delight'),
+    supplemental('fun', '乐趣；有趣的', 'joke'),
+    supplemental('lovely', '可爱的；美好的', 'fond'),
+    supplemental('amazing', '令人惊叹的', 'astound'),
+    supplemental('stern', '严厉的；苛刻的', 'hospitable'),
+    supplemental('friendly', '友好的', 'hospitable'),
+    supplemental('careful', '小心的；仔细的', 'concern'),
+    supplemental('ready', '准备好的；愿意的', 'apologise'),
+    supplemental('fortune', '财富；运气', 'grief'),
+    supplemental('agony', '极度痛苦', 'grief'),
+    supplemental('disappoint', '使失望', 'discourage'),
+    supplemental('hate', '憎恨；讨厌', 'hatred'),
+    supplemental('bother', '打扰；使烦恼', 'troublesome'),
+    supplemental('mad', '疯狂的；愤怒的', 'wicked'),
+    supplemental('crazy', '疯狂的', 'wicked'),
+    supplemental('selfish', '自私的', 'nasty'),
+    supplemental('unkind', '不友善的', 'envy'),
+    supplemental('stupid', '愚蠢的', 'oblivious'),
+  ],
+  22: [
+    supplemental('midnight', '午夜；子夜', 'overnight'),
+    supplemental('night', '夜晚', 'modern'),
+    supplemental('first', '第一；首先', 'secondly'),
+    supplemental('finish', '结束；完成', 'immediately'),
+    supplemental('moment', '片刻；时刻', 'prior'),
+    supplemental('minute', '分钟；微小的', 'prior'),
+  ],
+};
+
+const supplementalPartOfSpeechByWord: Record<string, string> = Object.fromEntries([
+  ['gasoline|protein|problem|motive|scientist|doctor|dictionary|festival|movie|artist|painter|jazz|hip-hop|melody|piano|guitar|goal|racket|umbrella|makeup|hat|restaurant|tray|knife|glass|juice|soda|coffee|vegetable|tomato|potato|fruit|peach|pear|orange|chicken|hamburger|pie|pizza|spaghetti|soup|nut|chocolate|ice cream|salt|candy|sugar|honey|hostel|kitchen|mall|supermarket|mason|infrastructure|apparatus|visa|traffic|airline|airplane|flight|way|highway|captain|channel|mail|saving|cash|loss|fool|bomb|blade|treason|sex|husband|twin|teenager|darling|lover|madam|housewife|household|guest|wedding|honeymoon|boss|friendship|stranger|deputy|actress|fireman|fisherman|argument|reader|mouth|muscle|death|hospital|happiness|fortune|agony|midnight|night|moment|minute', 'n.'],
+  ['hybridise|clothe|fade|develop|improve|deter|warn|explain|follow|loosen|relax|disappoint', 'v.'],
+  ['instinctive|desperate|clever|smart|homesick|classical|beautiful|ugly|yummy|terrible|overweight|lovely|amazing|stern|friendly|careful|ready|crazy|selfish|unkind|stupid', 'adj.'],
+  ['signal|sign|film|rock|pop|band|drum|bat|vacation|climb|fuel|dress|cap|colour|tan|bar|fish|cross|fire|interest|glow|hit|rebel|miss|kiss|hug|grip|wish|offer|check|hate|bother|finish', 'n. / v.'],
+  ['magic|fake|perfect|sweet|gay|single|quiet|mad', 'adj. / n.'],
+  ['pretty|first', 'adj. / adv.'],
+  ['drunk', 'adj. / n.'],
+  ['Olympic|yellow|grey|pink|white', 'adj. / n.'],
+  ['might', 'modal v. / n.'],
+  ['dear', 'adj. / n. / adv.'],
+  ['each', 'det. / pron.'],
+  ['welcome', 'v. / adj. / n.'],
+  ['clear', 'adj. / v.'],
+  ['fun', 'n. / adj.'],
+].flatMap(([words, partOfSpeech]) => String(words).split('|').map((word) => [word.toLowerCase(), partOfSpeech]))) as Record<string, string>;
+
+function correctedChapterWords(chapterId: number, words: BookWord[]) {
+  if (chapterId === 15) return correctedChapter15Words(words);
+
+  const excluded = excludedHeadwordsByChapter[chapterId] ?? new Set<string>();
+  const corrected = words.filter((word) => !excluded.has(word.word));
+
+  for (const addition of supplementalHeadwordsByChapter[chapterId] ?? []) {
+    const insertionIndex = addition.before
+      ? corrected.findIndex((word) => word.word === addition.before)
+      : corrected.length;
+    if (insertionIndex < 0) {
+      throw new Error(`Missing Chapter ${chapterId} insertion point: ${addition.before}`);
+    }
+
+    const reused = addition.sourceId
+      ? stream.find((word) => word.sourceId === addition.sourceId)
+      : undefined;
+    if (addition.sourceId && !reused) {
+      throw new Error(`Missing Chapter ${chapterId} source headword: ${addition.sourceId}`);
+    }
+
+    const anchor = corrected[insertionIndex] ?? corrected.at(-1);
+    const word: BookWord = reused ?? {
+      bookId: 'ielts',
+      chapter: chapterId,
+      chapterName: chapterNames[chapterId - 1],
+      list: anchor?.list ?? 1,
+      number: 0,
+      word: addition.word,
+      hint: addition.hint,
+      sourceHint: addition.hint,
+      sourceId: `book-${chapterId}-${addition.word.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      partOfSpeech: supplementalPartOfSpeechByWord[addition.word.toLowerCase()]
+        ?? partOfSpeechByWord[addition.word.toLowerCase()]
+        ?? '词组',
+    };
+    corrected.splice(insertionIndex, 0, word);
+  }
+
+  return corrected;
+}
+
 const starts = firstWords.map((word) => {
   const index = stream.findIndex((item) => item.word === word);
   if (index < 0) throw new Error('Missing Chapter start: ' + word);
@@ -237,7 +577,7 @@ export const chapters: BookChapter[] = chapterNames.map((name, index) => {
   const start = starts[index];
   const end = starts[index + 1] ?? stream.length;
   const sourceWords = stream.slice(start, end);
-  const chapterWords = index === 14 ? correctedChapter15Words(sourceWords) : sourceWords;
+  const chapterWords = correctedChapterWords(index + 1, sourceWords);
   return {
     id: index + 1,
     name,
@@ -249,6 +589,39 @@ export const chapters: BookChapter[] = chapterNames.map((name, index) => {
     })),
   };
 });
+
+function validateAuditedChapters() {
+  for (const chapter of chapters) {
+    for (const excluded of excludedHeadwordsByChapter[chapter.id] ?? []) {
+      if (chapter.words.some((word) => word.word === excluded)) {
+        throw new Error(`Excluded Chapter ${chapter.id} headword remains: ${excluded}`);
+      }
+    }
+    for (const addition of supplementalHeadwordsByChapter[chapter.id] ?? []) {
+      const matches = chapter.words.filter((word) => word.word === addition.word);
+      if (matches.length !== 1) {
+        throw new Error(`Chapter ${chapter.id} headword count for ${addition.word}: ${matches.length}`);
+      }
+      if (addition.sourceId && matches[0].sourceId !== addition.sourceId) {
+        throw new Error(`Chapter ${chapter.id} source ID changed for ${addition.word}`);
+      }
+      if (!addition.sourceId && matches[0].partOfSpeech === '词组') {
+        throw new Error(`Missing Chapter ${chapter.id} part of speech for ${addition.word}`);
+      }
+    }
+  }
+
+  if (chapters[14].words.length !== 149) {
+    throw new Error(`Chapter 15 should contain 149 headwords, found ${chapters[14].words.length}`);
+  }
+
+  const sourceIds = chapters.flatMap((chapter) => chapter.words.map((word) => word.sourceId).filter(Boolean));
+  if (new Set(sourceIds).size !== sourceIds.length) {
+    throw new Error('Duplicate IELTS source IDs found after chapter audit');
+  }
+}
+
+validateAuditedChapters();
 
 // Reuse the book's cleaned Chinese definitions when explaining related words.
 // A later occurrence wins when a headword appears more than once in the book.
