@@ -175,6 +175,58 @@ const firstWords = [
   'navigate', 'republic', 'economy', 'law', 'violence', 'pioneer', 'act', 'feel', 'daily',
 ];
 
+// Chapter 15 was originally imported from every English token in the PDF,
+// including derivations and memory notes. Keep only the printed headwords,
+// in the order shown on book pages 184-195.
+const chapter15PrimaryWordOrder = [
+  'republic', 'Marxism', 'socialism', 'communism', 'regime', 'government', 'authority', 'political', 'hierarchy', 'democracy', 'bureaucracy', 'egalitarian', 'materialism', 'revolution',
+  'reform', 'process', 'conservative', 'meltdown', 'municipal', 'neutral', 'bilateral', 'arena', 'flag', 'banner',
+  'president', 'premier', 'minister', 'secretary', 'parliament', 'senate', 'conference', 'meeting', 'headquarters', 'delegation', 'behalf', 'police', 'statesman',
+  'mayor', 'service', 'office', 'bureau', 'department', 'harness', 'administration', 'dominate', 'power', 'influence', 'affect', 'importance', 'significance', 'organisation', 'association',
+  'union', 'community', 'consortium', 'league', 'institution', 'unite', 'unique', 'nation', 'global', 'worldwide', 'federal', 'foreign', 'overseas',
+  'abroad', 'civil', 'emigrate', 'immigrate', 'reign', 'puppet', 'throne', 'crown', 'wreath', 'colony', 'liberty', 'independence',
+  'slum', 'refuge', 'asylum', 'population', 'demographic', 'citizen', 'resident', 'ethnic', 'racial', 'clan', 'franchise', 'entitle', 'preference', 'vote',
+  'elect', 'respondent', 'poll', 'ambition', 'nominate', 'checklist', 'succession', 'safety', 'welfare', 'well-being',
+  'harmony', 'steady', 'flourish', 'succeed', 'prospect', 'perspective', 'viewpoint', 'standpoint', 'outlook', 'guideline', 'ethic', 'suggest', 'advise', 'proposal',
+  'hint', 'declare', 'affirm', 'claim', 'proclaim', 'state', 'announce', 'clarify', 'assist', 'aid', 'encourage', 'implement', 'monitor',
+  'admit', 'African', 'European', 'Latin', 'Jewish', 'Arabian', 'Portuguese', 'Roman', 'Russian', 'Spanish', 'Swiss', 'Greek', 'Italian', 'soviet', 'Indian', 'Australia', 'New Zealand', 'Canada',
+  'Britain', 'France', 'Germany',
+];
+
+const chapter15SupplementalWords: Record<string, BookWord> = Object.fromEntries([
+  ['flag', 38, '旗帜；国旗', 'n.'],
+  ['meeting', 38, '会议；会面', 'n.'],
+  ['police', 38, '警察；警方', 'n.'],
+  ['office', 38, '办公室；要职；官职', 'n.'],
+  ['nation', 39, '国家；民族；国民', 'n.'],
+  ['global', 39, '全球的；全世界的', 'adj.'],
+  ['foreign', 39, '外国的；外来的；外交的', 'adj.'],
+  ['citizen', 39, '公民；市民', 'n.'],
+  ['safety', 40, '安全；安全场所', 'n.'],
+  ['Canada', 41, '加拿大', 'n.'],
+].map(([word, list, hint, partOfSpeech]) => [word, {
+  bookId: 'ielts' as const,
+  chapter: 15,
+  chapterName: '国家政府',
+  list: Number(list),
+  number: 0,
+  word: String(word),
+  hint: String(hint),
+  sourceHint: String(hint),
+  sourceId: 'book-15-' + String(word).toLowerCase().replace(/\s+/g, '-'),
+  partOfSpeech: String(partOfSpeech),
+}])) as Record<string, BookWord>;
+
+function correctedChapter15Words(words: BookWord[]) {
+  return chapter15PrimaryWordOrder.map((headword) => {
+    const sourceId = headword === 'claim' ? '15-40-35-claim' : undefined;
+    const word = chapter15SupplementalWords[headword]
+      ?? words.find((candidate) => sourceId ? candidate.sourceId === sourceId : candidate.word === headword);
+    if (!word) throw new Error('Missing Chapter 15 headword: ' + headword);
+    return word;
+  });
+}
+
 const starts = firstWords.map((word) => {
   const index = stream.findIndex((item) => item.word === word);
   if (index < 0) throw new Error('Missing Chapter start: ' + word);
@@ -184,10 +236,12 @@ const starts = firstWords.map((word) => {
 export const chapters: BookChapter[] = chapterNames.map((name, index) => {
   const start = starts[index];
   const end = starts[index + 1] ?? stream.length;
+  const sourceWords = stream.slice(start, end);
+  const chapterWords = index === 14 ? correctedChapter15Words(sourceWords) : sourceWords;
   return {
     id: index + 1,
     name,
-    words: stream.slice(start, end).map((word, number) => ({
+    words: chapterWords.map((word, number) => ({
       ...word,
       chapter: index + 1,
       chapterName: name,
