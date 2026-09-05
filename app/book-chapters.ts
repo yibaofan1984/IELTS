@@ -49,6 +49,7 @@ const sourceHintCorrections: Record<string, string> = {
   snatch: '一把抓住；迅速夺取',
   trail: '（使）拖在后面；跟踪；踪迹',
   obsess: '（使）痴迷；（使）心神不宁；be obsessed by/with 被……迷住；对……着迷',
+  crisis: '危机；危急关头；overcome a crisis 克服危机；ease a crisis 缓和危机',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -88,6 +89,7 @@ const displayHintCorrections: Record<string, string> = {
   snatch: '一把抓住；迅速夺取',
   trail: '（使）拖在后面；跟踪；踪迹',
   obsess: '（使）痴迷；（使）心神不宁',
+  crisis: '危机；危急关头',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
