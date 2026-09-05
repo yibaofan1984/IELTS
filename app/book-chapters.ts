@@ -54,6 +54,7 @@ const sourceHintCorrections: Record<string, string> = {
   decline: '下降；减少；衰退；拒绝；a decline in moral standards 道德水准下降',
   increment: '增加；增量；增加额；annual increment 年增长量',
   acquisition: '获得；取得；收购；购置物；习得；the acquisition of a fortune 获得一笔财富',
+  absent: '缺席的；不在场的；缺少的；心不在焉的；be absent from 缺席；不在（某处）',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -98,6 +99,7 @@ const displayHintCorrections: Record<string, string> = {
   decline: '下降；减少；衰退；拒绝',
   increment: '增加；增量；增加额',
   acquisition: '获得；取得；收购；购置物；习得',
+  absent: '缺席的；不在场的；缺少的；心不在焉的',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
