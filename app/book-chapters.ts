@@ -56,6 +56,7 @@ const sourceHintCorrections: Record<string, string> = {
   acquisition: '获得；取得；收购；购置物；习得；the acquisition of a fortune 获得一笔财富',
   absent: '缺席的；不在场的；缺少的；心不在焉的；be absent from 缺席；不在（某处）',
   cheque: '支票；用支票支付；check（美式拼写）',
+  coin: '硬币；铸造（硬币）；创造（新词或说法）；coin a term 创造术语',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -102,6 +103,7 @@ const displayHintCorrections: Record<string, string> = {
   acquisition: '获得；取得；收购；购置物；习得',
   absent: '缺席的；不在场的；缺少的；心不在焉的',
   cheque: '支票；用支票支付',
+  coin: '硬币；铸造；创造（新词或说法）',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
