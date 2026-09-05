@@ -50,6 +50,7 @@ const sourceHintCorrections: Record<string, string> = {
   trail: '（使）拖在后面；跟踪；踪迹',
   obsess: '（使）痴迷；（使）心神不宁；be obsessed by/with 被……迷住；对……着迷',
   crisis: '危机；危急关头；overcome a crisis 克服危机；ease a crisis 缓和危机',
+  security: '安全；保障；证券；Security Council 联合国安全理事会',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -90,6 +91,7 @@ const displayHintCorrections: Record<string, string> = {
   trail: '（使）拖在后面；跟踪；踪迹',
   obsess: '（使）痴迷；（使）心神不宁',
   crisis: '危机；危急关头',
+  security: '安全；保障；证券',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
