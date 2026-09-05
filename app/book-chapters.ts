@@ -57,6 +57,7 @@ const sourceHintCorrections: Record<string, string> = {
   absent: '缺席的；不在场的；缺少的；心不在焉的；be absent from 缺席；不在（某处）',
   cheque: '支票；用支票支付；check（美式拼写）',
   coin: '硬币；铸造（硬币）；创造（新词或说法）；coin a term 创造术语',
+  worthy: '值得的；有价值的；值得尊敬的；be worthy of 值得……',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -104,6 +105,7 @@ const displayHintCorrections: Record<string, string> = {
   absent: '缺席的；不在场的；缺少的；心不在焉的',
   cheque: '支票；用支票支付',
   coin: '硬币；铸造；创造（新词或说法）',
+  worthy: '值得的；有价值的；值得尊敬的',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
