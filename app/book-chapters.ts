@@ -51,6 +51,8 @@ const sourceHintCorrections: Record<string, string> = {
   obsess: '（使）痴迷；（使）心神不宁；be obsessed by/with 被……迷住；对……着迷',
   crisis: '危机；危急关头；overcome a crisis 克服危机；ease a crisis 缓和危机',
   security: '安全；保障；证券；Security Council 联合国安全理事会',
+  decline: '下降；减少；衰退；拒绝；a decline in moral standards 道德水准下降',
+  increment: '增加；增量；增加额；annual increment 年增长量',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -92,6 +94,8 @@ const displayHintCorrections: Record<string, string> = {
   obsess: '（使）痴迷；（使）心神不宁',
   crisis: '危机；危急关头',
   security: '安全；保障；证券',
+  decline: '下降；减少；衰退；拒绝',
+  increment: '增加；增量；增加额',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
