@@ -55,6 +55,7 @@ const sourceHintCorrections: Record<string, string> = {
   increment: '增加；增量；增加额；annual increment 年增长量',
   acquisition: '获得；取得；收购；购置物；习得；the acquisition of a fortune 获得一笔财富',
   absent: '缺席的；不在场的；缺少的；心不在焉的；be absent from 缺席；不在（某处）',
+  cheque: '支票；用支票支付；check（美式拼写）',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -100,6 +101,7 @@ const displayHintCorrections: Record<string, string> = {
   increment: '增加；增量；增加额',
   acquisition: '获得；取得；收购；购置物；习得',
   absent: '缺席的；不在场的；缺少的；心不在焉的',
+  cheque: '支票；用支票支付',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
