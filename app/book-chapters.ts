@@ -58,6 +58,7 @@ const sourceHintCorrections: Record<string, string> = {
   cheque: '支票；用支票支付；check（美式拼写）',
   coin: '硬币；铸造（硬币）；创造（新词或说法）；coin a term 创造术语',
   worthy: '值得的；有价值的；值得尊敬的；be worthy of 值得……',
+  hammer: '锤子；用锤敲打；反复强调；hammer sth into sb 向某人反复灌输（或强调）某种思想',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -106,6 +107,7 @@ const displayHintCorrections: Record<string, string> = {
   cheque: '支票；用支票支付',
   coin: '硬币；铸造；创造（新词或说法）',
   worthy: '值得的；有价值的；值得尊敬的',
+  hammer: '锤子；用锤敲打；反复强调',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
