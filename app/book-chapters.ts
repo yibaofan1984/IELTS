@@ -60,6 +60,7 @@ const sourceHintCorrections: Record<string, string> = {
   worthy: '值得的；有价值的；值得尊敬的；be worthy of 值得……',
   hammer: '锤子；用锤敲打；反复强调；hammer sth into sb 向某人反复灌输（或强调）某种思想',
   passage: '通行；通过；通道；段落；（时间的）流逝；the passage of vehicles 车辆通行',
+  vehicle: '车辆；交通工具；媒介；手段；a convenient vehicle 方便的交通工具',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -110,6 +111,7 @@ const displayHintCorrections: Record<string, string> = {
   worthy: '值得的；有价值的；值得尊敬的',
   hammer: '锤子；用锤敲打；反复强调',
   passage: '通行；通过；通道；段落；（时间的）流逝',
+  vehicle: '车辆；交通工具；媒介；手段',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
