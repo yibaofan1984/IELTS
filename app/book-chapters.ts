@@ -62,6 +62,7 @@ const sourceHintCorrections: Record<string, string> = {
   passage: '通行；通过；通道；段落；（时间的）流逝；the passage of vehicles 车辆通行',
   vehicle: '车辆；交通工具；媒介；手段；a convenient vehicle 方便的交通工具',
   handle: '把手；柄；处理；应付；操纵；handle with care 小心轻放',
+  pit: '坑；深坑；矿井；困境；果核；去掉果核；fall into a pit 落入险境',
 };
 
 const sourceHintCorrectionsBySourceId: Record<string, string> = {
@@ -114,6 +115,7 @@ const displayHintCorrections: Record<string, string> = {
   passage: '通行；通过；通道；段落；（时间的）流逝',
   vehicle: '车辆；交通工具；媒介；手段',
   handle: '把手；柄；处理；应付；操纵',
+  pit: '坑；深坑；矿井；困境；果核；去掉果核',
 };
 
 const displayHintCorrectionsBySourceId: Record<string, string> = {
